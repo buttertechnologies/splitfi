@@ -1,6 +1,6 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Connect } from "./Connect";
 
 const Navbar = () => {
   return (
@@ -14,7 +14,7 @@ const Navbar = () => {
 
           {/* Navigation Items */}
           <div className="flex items-center gap-4">
-            <Button>Connect Wallet</Button>
+            <Connect />
           </div>
         </div>
       </div>
