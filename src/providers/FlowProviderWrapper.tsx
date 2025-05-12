@@ -4,7 +4,11 @@ import React from "react";
 import { FlowProvider, FlowNetwork } from "@onflow/kit";
 import flowJSON from "../../flow.json";
 
-const flowNetwork: FlowNetwork = "mainnet";
+const flowNetwork = process.env.NEXT_PUBLIC_FLOW_NETWORK as FlowNetwork;
+
+if (flowNetwork !== "mainnet") {
+  console.info("App is running on:", flowNetwork);
+}
 
 export default function FlowProviderWrapper({
   children,
