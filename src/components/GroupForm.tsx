@@ -7,11 +7,13 @@ import { X } from "lucide-react";
 interface GroupFormProps {
   onSubmit: (groupName: string, members: string[]) => void;
   onCancel: () => void;
+  initialName?: string;
+  initialMembers?: string[];
 }
 
-export function GroupForm({ onSubmit, onCancel }: GroupFormProps) {
-  const [groupName, setGroupName] = useState("");
-  const [members, setMembers] = useState<string[]>([]);
+export function GroupForm({ onSubmit, onCancel, initialName = "", initialMembers = [] }: GroupFormProps) {
+  const [groupName, setGroupName] = useState(initialName);
+  const [members, setMembers] = useState<string[]>(initialMembers);
   const [newMemberAddress, setNewMemberAddress] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -113,7 +115,7 @@ export function GroupForm({ onSubmit, onCancel }: GroupFormProps) {
           type="submit"
           disabled={!groupName || members.length === 0}
         >
-          Create Group
+          {initialName ? "Save Changes" : "Create Group"}
         </Button>
       </div>
     </form>
