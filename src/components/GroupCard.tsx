@@ -2,12 +2,14 @@ import { Card, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface GroupCardProps {
+  id: string;
   name: string;
 }
 
-export function GroupCard({ name }: GroupCardProps) {
+export function GroupCard({ id, name }: GroupCardProps) {
   // Dummy Flow addresses for now
   const dummyMembers = [
     "0x1234567890abcdef",
@@ -35,9 +37,11 @@ export function GroupCard({ name }: GroupCardProps) {
         </div>
       </CardHeader>
       <CardFooter>
-        <Button className="w-full rounded-lg" variant="default">
-          Open Group
-        </Button>
+        <Link href={`/groups/${id}`} className="w-full">
+          <Button className="w-full rounded-lg" variant="default">
+            Open Group
+          </Button>
+        </Link>
       </CardFooter>
     </Card>
   );
