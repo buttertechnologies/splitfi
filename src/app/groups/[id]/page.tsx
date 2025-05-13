@@ -10,6 +10,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { GroupForm } from "@/components/GroupForm";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { User } from "lucide-react";
 
 const dummyGroup = {
   name: "Weekend Trip to Vegas",
@@ -52,6 +54,18 @@ export default function GroupDetailPage() {
       <p className="text-lg">
         Group ID: <span className="font-mono">{id}</span>
       </p>
+      <div className="mt-4">
+        <h2 className="text-xl font-semibold mb-2">Group Members</h2>
+        <div className="flex -space-x-2">
+          {dummyGroup.members.map((address) => (
+            <Avatar key={address} className="border-2 border-background">
+              <AvatarFallback>
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
