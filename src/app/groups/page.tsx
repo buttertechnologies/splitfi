@@ -11,7 +11,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useState } from "react";
-import { GroupForm } from "../../components/GroupForm";
+import { GroupForm } from "@/components/GroupForm";
+import { GroupCard } from "@/components/GroupCard";
 
 export default function GroupsPage() {
   const [isOpen, setIsOpen] = useState(false);
@@ -69,16 +70,16 @@ export default function GroupsPage() {
                 Create a new group to start splitting expenses with friends.
               </DialogDescription>
             </DialogHeader>
-            <GroupForm 
-              onSubmit={handleCreateGroup} 
-              onCancel={() => setIsOpen(false)} 
+            <GroupForm
+              onSubmit={handleCreateGroup}
+              onCancel={() => setIsOpen(false)}
             />
           </DialogContent>
         </Dialog>
       </div>
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {(data as string[])?.map((group, index) => (
-          <div key={index}>{group}</div>
+          <GroupCard key={index} name={group} />
         ))}
       </div>
     </div>
