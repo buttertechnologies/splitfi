@@ -1,6 +1,7 @@
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface GroupCardProps {
   name: string;
@@ -28,6 +29,11 @@ export function GroupCard({ name }: GroupCardProps) {
           ))}
         </div>
       </CardHeader>
+      <CardFooter>
+        <Button className="w-full rounded-lg" variant="default">
+          Open Group
+        </Button>
+      </CardFooter>
     </Card>
   );
 } 
