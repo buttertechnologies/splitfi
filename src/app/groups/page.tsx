@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useState } from "react";
-import { GroupForm } from "../../components/GroupForm";
+import { GroupForm } from "@/components/GroupForm";
 import { GroupCard } from "@/components/GroupCard";
 
 export default function GroupsPage() {
@@ -70,9 +70,9 @@ export default function GroupsPage() {
                 Create a new group to start splitting expenses with friends.
               </DialogDescription>
             </DialogHeader>
-            <GroupForm 
-              onSubmit={handleCreateGroup} 
-              onCancel={() => setIsOpen(false)} 
+            <GroupForm
+              onSubmit={handleCreateGroup}
+              onCancel={() => setIsOpen(false)}
             />
           </DialogContent>
         </Dialog>
