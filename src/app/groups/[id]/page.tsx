@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { GroupForm } from "@/components/GroupForm";
+import { ExpenseForm } from "@/components/ExpenseForm";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User } from "lucide-react";
 
@@ -23,10 +24,16 @@ export default function GroupDetailPage() {
   const params = useParams();
   const { id } = params;
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
 
   const handleEditGroup = (groupName: string, members: string[]) => {
     console.log("Editing group:", { groupName, members });
     setIsEditDialogOpen(false);
+  };
+
+  const handleAddExpense = (description: string, amount: number) => {
+    console.log("Adding expense:", { description, amount });
+    setIsAddExpenseDialogOpen(false);
   };
 
   return (
@@ -38,21 +45,40 @@ export default function GroupDetailPage() {
       </div>
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4 sm:gap-0">
         <h1 className="text-3xl font-bold">{dummyGroup.name}</h1>
-        {/* TODO: Only show edit button to group administrators */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <Button onClick={() => setIsEditDialogOpen(true)}>Edit Group</Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsAddExpenseDialogOpen(true)}>Add Expense</Button>
+          {/* TODO: Only show edit button to group administrators */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <Button onClick={() => setIsEditDialogOpen(true)}>Edit Group</Button>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Edit Group</DialogTitle>
+                <DialogDescription>
+                  Make changes to your group here. Click save when you're done.
+                </DialogDescription>
+              </DialogHeader>
+              <GroupForm
+                onSubmit={handleEditGroup}
+                onCancel={() => setIsEditDialogOpen(false)}
+                initialName={dummyGroup.name}
+                initialMembers={dummyGroup.members}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Dialog open={isAddExpenseDialogOpen} onOpenChange={setIsAddExpenseDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Edit Group</DialogTitle>
+              <DialogTitle>Add Expense</DialogTitle>
               <DialogDescription>
-                Make changes to your group here. Click save when you're done.
+                Add a new expense to split with your group members.
               </DialogDescription>
             </DialogHeader>
-            <GroupForm
-              onSubmit={handleEditGroup}
-              onCancel={() => setIsEditDialogOpen(false)}
-              initialName={dummyGroup.name}
-              initialMembers={dummyGroup.members}
+            <ExpenseForm
+              onSubmit={handleAddExpense}
+              onCancel={() => setIsAddExpenseDialogOpen(false)}
             />
           </DialogContent>
         </Dialog>
