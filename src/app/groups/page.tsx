@@ -1,8 +1,20 @@
 "use client";
 
 import { useFlowQuery } from "@onflow/kit";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useState } from "react";
+import { GroupForm } from "../../components/GroupForm";
 
 export default function GroupsPage() {
+  const [isOpen, setIsOpen] = useState(false);
   const { data, isLoading, error } = useFlowQuery({
     cadence: `
       access(all)
@@ -23,6 +35,11 @@ export default function GroupsPage() {
     `,
   });
 
+  const handleCreateGroup = (groupName: string, members: string[]) => {
+    console.log("Creating group:", { groupName, members });
+    setIsOpen(false);
+  };
+
   if (isLoading)
     return (
       <div className="container mx-auto p-4">
@@ -39,7 +56,26 @@ export default function GroupsPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Groups</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Groups</h1>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button>Create Group</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Create New Group</DialogTitle>
+              <DialogDescription>
+                Create a new group to start splitting expenses with friends.
+              </DialogDescription>
+            </DialogHeader>
+            <GroupForm 
+              onSubmit={handleCreateGroup} 
+              onCancel={() => setIsOpen(false)} 
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
       <div className="space-y-2">
         {(data as string[])?.map((group, index) => (
           <div key={index}>{group}</div>
