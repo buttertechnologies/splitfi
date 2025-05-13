@@ -15,10 +15,15 @@ export function GroupCard({ name }: GroupCardProps) {
     "0x9876543210fedcba"
   ];
 
+  // Dummy amount for now
+  const dummyAmount = 1200.00;
+  const formattedAmount = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(dummyAmount);
+
   return (
     <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
       <CardHeader>
         <CardTitle>{name}</CardTitle>
+        <div className="text-2xl font-bold mt-1 mb-2">{formattedAmount}</div>
         <div className="flex -space-x-2 mt-2">
           {dummyMembers.map((address, index) => (
             <Avatar key={address} className="border-2 border-background">
