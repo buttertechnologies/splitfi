@@ -57,6 +57,7 @@ export default function GroupDetailPage() {
           </DialogContent>
         </Dialog>
       </div>
+      <hr className="my-4 border-t border-gray-200" />
       <div className="mt-4">
         <h2 className="text-xl font-semibold mb-2">Group Members</h2>
         <div className="flex -space-x-2">
