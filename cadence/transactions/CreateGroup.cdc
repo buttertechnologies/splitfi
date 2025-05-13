@@ -1,5 +1,7 @@
 transaction() {
-    prepare(account: &Account) {}
+    prepare(account: &Account) {
+        
+    }
 
     execute {}
 }
