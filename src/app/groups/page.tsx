@@ -77,7 +77,7 @@ export default function GroupsPage() {
           </DialogContent>
         </Dialog>
       </div>
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {(data as string[])?.map((group, index) => (
           <GroupCard key={index} name={group} />
         ))}
