@@ -1,6 +1,7 @@
 "use client";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,7 +31,12 @@ export default function GroupDetailPage() {
 
   return (
     <div className="container mx-auto p-8">
-      <div className="flex justify-between items-center mb-4">
+      <div className="mb-6">
+        <Link href="/groups">
+          <Button variant="link" className="p-0 h-auto text-base">← Back to Groups</Button>
+        </Link>
+      </div>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4 sm:gap-0">
         <h1 className="text-3xl font-bold">{dummyGroup.name}</h1>
         {/* TODO: Only show edit button to group administrators */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
