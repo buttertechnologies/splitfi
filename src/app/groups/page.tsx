@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { GroupForm } from "../../components/GroupForm";
+import { GroupCard } from "@/components/GroupCard";
 
 export default function GroupsPage() {
   const [isOpen, setIsOpen] = useState(false);
@@ -78,7 +79,7 @@ export default function GroupsPage() {
       </div>
       <div className="space-y-2">
         {(data as string[])?.map((group, index) => (
-          <div key={index}>{group}</div>
+          <GroupCard key={index} name={group} />
         ))}
       </div>
     </div>
