@@ -133,6 +133,7 @@ export default function GroupDetailPage() {
                 onCancel={() => setIsEditDialogOpen(false)}
                 initialName={dummyGroup.name}
                 initialMembers={dummyGroup.members}
+                groupId={typeof id === 'string' ? id : Array.isArray(id) ? id[0] : ''}
               />
             </DialogContent>
           </Dialog>
