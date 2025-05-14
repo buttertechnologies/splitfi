@@ -120,3 +120,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Animation for dialog fade-in */
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-fade-in {
+  animation: fade-in 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Animation for pop effect */
+@keyframes pop {
+  0% { transform: scale(0.7); opacity: 0.5; }
+  80% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-pop {
+  animation: pop 0.4s cubic-bezier(0.4,0,0.2,1);
+}

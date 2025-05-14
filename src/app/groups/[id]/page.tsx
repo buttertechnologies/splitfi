@@ -17,6 +17,7 @@ import { User } from "lucide-react";
 import { ExpenseCard } from "@/components/ExpenseCard";
 import { PaymentCard } from "@/components/PaymentCard";
 import { MembersList } from "@/components/MembersList";
+import { TransactionDialog } from "@/components/TransactionDialog";
 
 const dummyGroup = {
   name: "Weekend Trip to Vegas",
@@ -77,6 +78,8 @@ export default function GroupDetailPage() {
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [selectedMembersTitle, setSelectedMembersTitle] = useState("");
   const [selectedMembersDescription, setSelectedMembersDescription] = useState("");
+  const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
+  const [transactionStatus, setTransactionStatus] = useState<'pending' | 'success'>('pending');
 
   const handleEditGroup = (groupName: string, members: string[]) => {
     console.log("Editing group:", { groupName, members });
@@ -91,6 +94,11 @@ export default function GroupDetailPage() {
   ) => {
     console.log("Adding expense:", { description, amount, splitType, memberAmounts });
     setIsAddExpenseDialogOpen(false);
+    setTransactionStatus('pending');
+    setIsTransactionDialogOpen(true);
+    setTimeout(() => {
+      setTransactionStatus('success');
+    }, 1500);
   };
 
   return (
@@ -230,6 +238,13 @@ export default function GroupDetailPage() {
             })}
         </div>
       </div>
+
+      <TransactionDialog
+        open={isTransactionDialogOpen}
+        onOpenChange={setIsTransactionDialogOpen}
+        status={transactionStatus}
+        txId="0x1234567890abcdef"
+      />
     </div>
   );
 }
