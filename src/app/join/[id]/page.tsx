@@ -3,6 +3,8 @@ import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User } from "lucide-react";
+import { useState } from "react";
+import { TransactionDialog } from "@/components/TransactionDialog";
 
 const dummyGroup = {
   name: "Weekend Trip to Vegas",
@@ -12,6 +14,11 @@ const dummyGroup = {
 export default function JoinGroupPage() {
   const params = useParams();
   const { id } = params;
+  const [txOpen, setTxOpen] = useState(false);
+
+  const handleJoin = () => {
+    setTxOpen(true);
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background">
@@ -40,10 +47,14 @@ export default function JoinGroupPage() {
             ))}
           </div>
         </div>
-        <Button className="w-full mt-4" size="lg">
+        <Button className="w-full mt-4" size="lg" onClick={handleJoin}>
           Join Group
         </Button>
       </div>
+      <TransactionDialog
+        open={txOpen}
+        onOpenChange={setTxOpen}
+      />
     </div>
   );
 }

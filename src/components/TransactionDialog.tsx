@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,21 +12,33 @@ import { Button } from "@/components/ui/button";
 interface TransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  status: "pending" | "success";
   txId?: string;
   timeoutMs?: number;
+  onSuccess?: () => void;
 }
 
 export const TransactionDialog: React.FC<TransactionDialogProps> = ({
   open,
   onOpenChange,
-  status,
   txId,
-  timeoutMs = 2000,
+  timeoutMs = 1500,
+  onSuccess,
 }) => {
+  const [status, setStatus] = useState<'pending' | 'success'>('pending');
   const explorerUrl = txId
     ? `https://testnet.flowscan.org/transaction/${txId}`
     : undefined;
+
+  useEffect(() => {
+    if (open) {
+      setStatus('pending');
+      const timer = setTimeout(() => {
+        setStatus('success');
+        if (onSuccess) onSuccess();
+      }, timeoutMs);
+      return () => clearTimeout(timer);
+    }
+  }, [open, timeoutMs, onSuccess]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
