@@ -23,6 +23,15 @@
 				"testnet": "9a0766d93b6608b7"
 			}
 		},
+		"Crypto": {
+			"source": "mainnet://e467b9dd11fa00df.Crypto",
+			"hash": "610692c2092bd29d8f49aefc10b6e8ff3d4b3909331fece98f6966fbdcb4cdd4",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "e467b9dd11fa00df",
+				"testnet": "8c5303eaa26202d6"
+			}
+		},
 		"FeeEstimator": {
 			"source": "mainnet://473d6a2c37eab5be.FeeEstimator",
 			"hash": "1f0acf6455bb161b1b48953a4f4e863aca5f81a25dd53b1810e2b5b253551df3",

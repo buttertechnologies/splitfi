@@ -1,5 +1,8 @@
 import "Divy"
 
+/**
+ * Creates a new group and stores the membership in the account's storage.
+ */
 transaction(name: String) {
     var membershipCollectionRef: &Divy.MembershipCollection?
 
