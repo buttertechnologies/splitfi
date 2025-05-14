@@ -1,3 +1,4 @@
+import "Crypto"
 access(all)
 contract Divy {
     access(all) let groups: {UInt64: Bool}
@@ -39,7 +40,48 @@ contract Divy {
         }
     }
 
-    fun inviteMember(groupId: UInt64, address: Address) {
+    /**
+     * Represents an anonymous invitation to a group allowing a user to submit invitations
+     * out of band. (i.e. QR code, email, AirDrop, etc.)
+     */
+    access(all) resource AnonymousInvitation {
+        access(contract) let cap: Capability<auth(Invitee) &Group>
+        access(all) let publicKey: [UInt8]
+        access(all) let signatureAlgorithm: UInt8
+        access(all) let hashAlgorithm: UInt8
+
+        init(
+            cap: Capability<auth(Invitee) &Group>,
+            publicKey: [UInt8],
+            signatureAlgorithm: SignatureAlgorithm,
+            hashAlgorithm: HashAlgorithm,
+        ) {
+            self.cap = cap
+            self.publicKey = publicKey
+            self.signatureAlgorithm = signatureAlgorithm.rawValue
+            self.hashAlgorithm = hashAlgorithm.rawValue
+        }
+
+        access(all) view fun verify(signature: [UInt8], address: Address): Bool {
+            let key = PublicKey(
+                publicKey: self.publicKey,
+                signatureAlgorithm: SignatureAlgorithm(self.signatureAlgorithm)!,
+            )
+            return key.verify(
+                signature: signature,
+                signedData: self.getChallenge(address: address),
+                domainSeparationTag: "DivyClaimMembership",
+                hashAlgorithm: HashAlgorithm(self.hashAlgorithm)!,
+            )
+        }
+
+        access(all) view fun getChallenge(address: Address): [UInt8] {
+            let message: [UInt8] = address.toBytes()
+            return message
+        }
+    }
+
+    access(contract) fun inviteMember(groupId: UInt64, address: Address) {
         pre {
             self.invitations[address] == nil: "Address already invited"
         }
@@ -89,11 +131,14 @@ contract Divy {
         access(all) let members: {Address: MembershipPtr}
         // Index of invitation UUID -> address used to map all outstanding invitations
         access(all) let invitationsIndex: {UInt64: Address}
+        // Map of pkey -> anonymous invitation
+        access(all) let anonymousInvitations: @{String: AnonymousInvitation}
 
         init(name: String) {
             self.name = name
             self.members = {}
             self.invitationsIndex = {}
+            self.anonymousInvitations <- {}
         }
 
         access(Invitee) fun createMembership(): @Membership {
@@ -109,6 +154,29 @@ contract Divy {
             }
             Divy.inviteMember(groupId: self.uuid, address: address)
             self.invitationsIndex[self.uuid] = address
+        }
+
+        /**
+         * Create an anonymous invitation to the group.
+         */
+        access(all) fun createAnonymousInvitation(
+            publicKey: [UInt8],
+            signatureAlgorithm: SignatureAlgorithm,
+            hashAlgorithm: HashAlgorithm,
+        ) {
+            let cap = Divy.account.capabilities.storage.issue<auth(Invitee) &Group>(
+                Divy.deriveGroupStoragePath(groupId: self.uuid)
+            )
+            let anonymousInvitation <- create AnonymousInvitation(
+                cap: cap,
+                publicKey: publicKey,
+                signatureAlgorithm: signatureAlgorithm,
+                hashAlgorithm: hashAlgorithm
+            )
+
+            // Store the anonymous invitation in the group
+            let key = String.encodeHex(publicKey).concat("_").concat(signatureAlgorithm.rawValue.toString()).concat("_").concat(hashAlgorithm.rawValue.toString())
+            self.anonymousInvitations[key] <-! anonymousInvitation
         }
 
         access(Member) fun hydrateMember(_ address: Address, uuid: UInt64?) {
@@ -161,6 +229,30 @@ contract Divy {
             let membershipPtr = (&self.members[address] as &MembershipPtr?)!
             return membershipPtr.borrow()
                 ?? panic("Membership not found for address ".concat(address.toString()))
+        }
+
+        /**
+         * Verify and destroy an anonymous invitation.
+         */
+        access(contract) fun claimAnonymousInvitation(
+            signature: [UInt8],
+            publicKey: [UInt8],
+            signatureAlgorithm: SignatureAlgorithm,
+            hashAlgorithm: HashAlgorithm,
+        ): Capability<auth(Invitee) &Group> {
+            let key = String.encodeHex(publicKey).concat("_").concat(signatureAlgorithm.rawValue.toString()).concat("_").concat(hashAlgorithm.rawValue.toString())
+            assert(
+                (&self.anonymousInvitations[key] as &AnonymousInvitation?)!.verify(
+                    signature: signature,
+                    address: self.owner!.address
+                ),
+                message: "Anonymous invitation verification failed"
+            )
+            let invitation <- self.anonymousInvitations.remove(key: key)!
+            let cap = invitation.cap
+            destroy <- invitation
+
+            return cap
         }
     }
 
@@ -303,6 +395,29 @@ contract Divy {
             self.addMembership(membership: <-membership)
 
             destroy <-invitation
+        }
+
+        access(Owner) fun claimAnonymousInvitation(
+            groupId: UInt64,
+            publicKey: [UInt8],
+            signatureAlgorithm: SignatureAlgorithm,
+            hashAlgorithm: HashAlgorithm,
+            signature: [UInt8],
+        ) {
+            pre {
+                self.groupIdToUuid[groupId] == nil: "User already has a membership for this group"
+            }
+
+            let groupRef = Divy.borrowGroup(groupId: groupId)!
+            let cap = groupRef.claimAnonymousInvitation(
+                signature: signature,
+                publicKey: publicKey,
+                signatureAlgorithm: signatureAlgorithm,
+                hashAlgorithm: hashAlgorithm
+            )
+
+            let membership <- cap.borrow()!.createMembership()
+            self.addMembership(membership: <-membership)
         }
 
         init() {
