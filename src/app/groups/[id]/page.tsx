@@ -14,6 +14,7 @@ import { GroupForm } from "@/components/GroupForm";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User } from "lucide-react";
+import { ExpenseCard } from "@/components/ExpenseCard";
 
 const dummyGroup = {
   name: "Weekend Trip to Vegas",
@@ -138,37 +139,13 @@ export default function GroupDetailPage() {
         <h2 className="text-xl font-semibold mb-4">Expenses</h2>
         <div className="grid gap-4">
           {dummyExpenses.map((expense) => (
-            <div key={expense.id} className="bg-card rounded-lg border p-4">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="font-medium text-lg">{expense.description}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {expense.date.toLocaleDateString()} at{" "}
-                    {expense.date.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                </div>
-                <div className="text-lg font-semibold">
-                  ${expense.amount.toFixed(2)}
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex -space-x-2">
-                  {expense.splitBetween.map((address) => (
-                    <Avatar
-                      key={address}
-                      className="border-2 border-background"
-                    >
-                      <AvatarFallback>
-                        <User className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <ExpenseCard
+              key={expense.id}
+              description={expense.description}
+              amount={expense.amount}
+              date={expense.date}
+              splitBetween={expense.splitBetween}
+            />
           ))}
         </div>
       </div>
