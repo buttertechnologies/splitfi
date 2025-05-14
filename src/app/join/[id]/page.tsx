@@ -54,6 +54,10 @@ export default function JoinGroupPage() {
       <TransactionDialog
         open={txOpen}
         onOpenChange={setTxOpen}
+        pendingTitle="Joining Group"
+        pendingDescription="You are being added to the group. Please wait..."
+        successTitle="You've Joined!"
+        successDescription="You have been successfully added to the group."
       />
     </div>
   );

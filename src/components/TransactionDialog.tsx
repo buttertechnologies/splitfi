@@ -15,6 +15,10 @@ interface TransactionDialogProps {
   txId?: string;
   timeoutMs?: number;
   onSuccess?: () => void;
+  pendingTitle?: string;
+  pendingDescription?: string;
+  successTitle?: string;
+  successDescription?: string;
 }
 
 export const TransactionDialog: React.FC<TransactionDialogProps> = ({
@@ -23,6 +27,10 @@ export const TransactionDialog: React.FC<TransactionDialogProps> = ({
   txId,
   timeoutMs = 1500,
   onSuccess,
+  pendingTitle,
+  pendingDescription,
+  successTitle,
+  successDescription,
 }) => {
   const [status, setStatus] = useState<'pending' | 'success'>('pending');
   const explorerUrl = txId
@@ -50,12 +58,14 @@ export const TransactionDialog: React.FC<TransactionDialogProps> = ({
             ) : (
               <CheckCircle2 className="text-green-500 animate-pop" size={48} />
             )}
-            {status === "pending" ? "Transaction Pending" : "Transaction Successful"}
+            {status === "pending"
+              ? pendingTitle || "Transaction Pending"
+              : successTitle || "Transaction Successful"}
           </DialogTitle>
           <DialogDescription className="text-center mt-2">
             {status === "pending"
-              ? "Your transaction is being processed. Please wait..."
-              : "Your transaction was successful!"}
+              ? pendingDescription || "Your transaction is being processed. Please wait..."
+              : successDescription || "Your transaction was successful!"}
           </DialogDescription>
         </DialogHeader>
         {status === "success" && explorerUrl && (
