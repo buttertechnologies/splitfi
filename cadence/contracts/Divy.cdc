@@ -1,19 +1,66 @@
 access(all)
 contract Divy {
     access(all) let groups: {UInt64: Bool}
+    access(all) let invitations: @{Address: {UInt64: Invitation}}
 
     access(all) let MembershipCollectionPublicPath: PublicPath
     access(all) let MembershipCollectionStoragePath: StoragePath
 
     access(all) entitlement Owner
+
     access(all) entitlement Admin
     access(all) entitlement Member
+    access(all) entitlement Invitee
 
     init() {
         self.MembershipCollectionPublicPath = /public/divyMembershipCollection
         self.MembershipCollectionStoragePath = /storage/divyMembershipCollection
 
         self.groups = {}
+        self.invitations <- {}
+    }
+
+    /**
+     * The `Invitation` resource is used to represent an invitation to a group.
+     */
+    access(all) resource Invitation {
+        access(contract) let cap: Capability<auth(Invitee) &Group>
+
+        init(cap: Capability<auth(Invitee) &Group>) {
+            self.cap = cap
+        }
+
+        access(all) view fun getGroupId(): UInt64 {
+            return (self.cap.borrow() ?? panic("Invite invalid")).uuid
+        }
+
+        access(all) fun isValid(): Bool {
+            return self.cap.check()
+        }
+    }
+
+    fun inviteMember(groupId: UInt64, address: Address) {
+        pre {
+            self.invitations[address] == nil: "Address already invited"
+        }
+
+        var _userInvites = (&self.invitations[address] as auth(Mutate, Insert) &{UInt64: Invitation}?)
+        if _userInvites == nil {
+            self.invitations[address] <-! {}
+            _userInvites = (&self.invitations[address] as auth(Mutate, Insert) &{UInt64: Invitation}?)
+        }
+
+        // Workaround for Cadence bug, can be removed when it's possible to do this in one expression without a "loss of resource" error
+        let userInvites = _userInvites!
+        if userInvites[groupId] != nil {
+            panic("User already invited to this group")
+        }
+
+        let cap = self.account.capabilities.storage.issue<auth(Invitee) &Group>(
+            self.deriveGroupStoragePath(groupId: groupId)
+        )
+
+        userInvites[groupId] <-! create Invitation(cap: cap)
     }
 
     /**
@@ -40,17 +87,28 @@ contract Divy {
     access(all) resource Group {
         access(all) let name: String
         access(all) let members: {Address: MembershipPtr}
+        // Index of invitation UUID -> address used to map all outstanding invitations
+        access(all) let invitationsIndex: {UInt64: Address}
 
         init(name: String) {
             self.name = name
             self.members = {}
+            self.invitationsIndex = {}
         }
 
-        access(Admin) fun createMembership(): @Membership {
+        access(Invitee) fun createMembership(): @Membership {
             let adminCap = Divy.issueMemberCapability(groupId: self.uuid)
             return <- create Membership(
                 memberCapability: adminCap
             )
+        }
+
+        access(Admin) fun inviteMember(address: Address) {
+            pre {
+                self.members[address] == nil: "Member already exists"
+            }
+            Divy.inviteMember(groupId: self.uuid, address: address)
+            self.invitationsIndex[self.uuid] = address
         }
 
         access(Member) fun hydrateMember(_ address: Address, uuid: UInt64?) {
@@ -129,15 +187,22 @@ contract Divy {
         // The UUID of the membership.
         access(all) let groupId: UInt64
         // Expenses incurred by the member, indexed by the expense UUID.
-        access(all) let expenses: {UInt64: MemberExpense}
+        access(all) let expenses: [MemberExpense]
         access(self) let memberCapability: Capability<auth(Member) &Group>
         access(self) var adminCapability: Capability<auth(Admin) &Group>?
         
         init(memberCapability: Capability<auth(Member) &Group>) {
             self.groupId = memberCapability.borrow()!.uuid
-            self.expenses = {}
+            self.expenses = []
             self.memberCapability = memberCapability
             self.adminCapability = nil
+        }
+
+        /**
+         * Add an expense to the group.
+         */
+        access(Owner) fun addExpense(expense: MemberExpense) {
+            self.expenses.append(expense)
         }
 
         /**
@@ -182,6 +247,13 @@ contract Divy {
             }
             return self.adminCapability!.borrow() as! auth(Admin) &Group
         }
+
+        /**
+         * Borrow the unentitled group reference.
+         */
+        access(all) fun borrowGroup(): &Group {
+            return self.memberCapability.borrow()!
+        }
     }
 
     /**
@@ -192,7 +264,7 @@ contract Divy {
         access(all) let groupIdToUuid: {UInt64: UInt64}
         access(all) let memberships: @{UInt64: Membership}
 
-        access(all) fun addMembership(membership: @Membership) {
+        access(contract) fun addMembership(membership: @Membership) {
             let uuid = membership.uuid
             let groupId = membership.groupId
             self.memberships[uuid] <-! membership
@@ -206,6 +278,31 @@ contract Divy {
         access(all) fun borrowByGroupId(groupId: UInt64): &Membership {
             let uuid = self.groupIdToUuid[groupId] ?? panic("Group ID not found")
             return (&self.memberships[uuid])!
+        }
+
+        access(Owner) fun borrowOwner(uuid: UInt64): auth(Owner) &Membership? {
+            return (&self.memberships[uuid] as auth(Owner) &Membership?)!
+        }
+
+        access(Owner) fun borrowOwnerByGroupId(groupId: UInt64): auth(Owner) &Membership? {
+            let uuid = self.groupIdToUuid[groupId] ?? panic("Group ID not found")
+            return (&self.memberships[uuid] as auth(Owner) &Membership?)!
+        }
+
+        access(Owner) fun claimInvitation(
+            groupId: UInt64,
+        ) {
+            pre {
+                self.groupIdToUuid[groupId] == nil: "User already has a membership for this group"
+            }
+
+            let ownerInvitations = (&Divy.invitations[self.owner!.address] as auth(Mutate, Remove) &{UInt64: Invitation}?)!
+            let invitation <- ownerInvitations.remove(key: groupId)!
+            let membership <- invitation.cap.borrow()!.createMembership()
+
+            self.addMembership(membership: <-membership)
+
+            destroy <-invitation
         }
 
         init() {

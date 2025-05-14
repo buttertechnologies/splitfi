@@ -6,8 +6,8 @@
 				"testing": "0000000000000007"
 			}
 		},
-		"Test": {
-			"source": "cadence/contracts/Test.cdc",
+		"DivyDto": {
+			"source": "cadence/contracts/DivyDto.cdc",
 			"aliases": {
 				"testing": "0000000000000008"
 			}
@@ -121,7 +121,8 @@
 	"deployments": {
 		"emulator": {
 			"emulator-account": [
-				"Test"
+				"Divy",
+				"DivyDto"
 			]
 		}
 	}
