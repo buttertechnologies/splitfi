@@ -238,6 +238,7 @@ export default function GroupDetailPage() {
       <TransactionDialog
         open={isTransactionDialogOpen}
         onOpenChange={setIsTransactionDialogOpen}
+        txId="0x1234567890abcdef"
       />
     </div>
   );
