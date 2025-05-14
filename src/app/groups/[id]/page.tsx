@@ -79,7 +79,6 @@ export default function GroupDetailPage() {
   const [selectedMembersTitle, setSelectedMembersTitle] = useState("");
   const [selectedMembersDescription, setSelectedMembersDescription] = useState("");
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
-  const [transactionStatus, setTransactionStatus] = useState<'pending' | 'success'>('pending');
 
   const handleEditGroup = (groupName: string, members: string[]) => {
     console.log("Editing group:", { groupName, members });
@@ -94,11 +93,7 @@ export default function GroupDetailPage() {
   ) => {
     console.log("Adding expense:", { description, amount, splitType, memberAmounts });
     setIsAddExpenseDialogOpen(false);
-    setTransactionStatus('pending');
     setIsTransactionDialogOpen(true);
-    setTimeout(() => {
-      setTransactionStatus('success');
-    }, 1500);
   };
 
   return (
@@ -133,6 +128,7 @@ export default function GroupDetailPage() {
                 onCancel={() => setIsEditDialogOpen(false)}
                 initialName={dummyGroup.name}
                 initialMembers={dummyGroup.members}
+                groupId={typeof id === 'string' ? id : Array.isArray(id) ? id[0] : ''}
               />
             </DialogContent>
           </Dialog>
@@ -242,7 +238,6 @@ export default function GroupDetailPage() {
       <TransactionDialog
         open={isTransactionDialogOpen}
         onOpenChange={setIsTransactionDialogOpen}
-        status={transactionStatus}
         txId="0x1234567890abcdef"
       />
     </div>
