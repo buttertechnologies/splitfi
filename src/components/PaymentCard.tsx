@@ -47,7 +47,7 @@ export function PaymentCard({ from, to, amounts, date }: PaymentCardProps) {
         <div className="flex -space-x-2">
           {to.map((address, index) => (
             <Avatar
-              key={address}
+              key={`${address}-${index}`}
               className="border-2 border-background"
               style={{ zIndex: to.length - index }}
             >
@@ -72,7 +72,7 @@ export function PaymentCard({ from, to, amounts, date }: PaymentCardProps) {
         </div>
         <div className="mt-1 space-y-1">
           {to.map((address, index) => (
-            <div key={address} className="flex justify-between text-sm">
+            <div key={`${address}-${index}`} className="flex justify-between text-sm">
               <span>{address.slice(0, 6)}...{address.slice(-4)}</span>
               <span className="font-medium">${amounts[index].toFixed(2)}</span>
             </div>
