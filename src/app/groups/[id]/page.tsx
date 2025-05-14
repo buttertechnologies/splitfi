@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User } from "lucide-react";
 import { ExpenseCard } from "@/components/ExpenseCard";
 import { PaymentCard } from "@/components/PaymentCard";
+import { MembersList } from "@/components/MembersList";
 
 const dummyGroup = {
   name: "Weekend Trip to Vegas",
@@ -72,6 +73,10 @@ export default function GroupDetailPage() {
   const { id } = params;
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
+  const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [selectedMembersTitle, setSelectedMembersTitle] = useState("");
+  const [selectedMembersDescription, setSelectedMembersDescription] = useState("");
 
   const handleEditGroup = (groupName: string, members: string[]) => {
     console.log("Editing group:", { groupName, members });
@@ -148,7 +153,15 @@ export default function GroupDetailPage() {
       <hr className="my-4 border-t border-gray-200" />
       <div className="mt-4">
         <h2 className="text-xl font-semibold mb-2">Group Members</h2>
-        <div className="flex -space-x-2">
+        <div 
+          className="flex -space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => {
+            setSelectedMembers(dummyGroup.members);
+            setSelectedMembersTitle("Group Members");
+            setSelectedMembersDescription("List of all members in this group");
+            setIsMembersDialogOpen(true);
+          }}
+        >
           {dummyGroup.members.map((address) => (
             <Avatar key={address} className="border-2 border-background">
               <AvatarFallback>
@@ -159,6 +172,14 @@ export default function GroupDetailPage() {
         </div>
       </div>
 
+      <MembersList
+        members={selectedMembers}
+        isOpen={isMembersDialogOpen}
+        onOpenChange={setIsMembersDialogOpen}
+        title={selectedMembersTitle}
+        description={selectedMembersDescription}
+      />
+
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Activity</h2>
         <div className="grid gap-4">
@@ -167,23 +188,43 @@ export default function GroupDetailPage() {
             .map((item) => {
               if ('description' in item) {
                 return (
-                  <ExpenseCard
+                  <div
                     key={`expense-${item.id}`}
-                    description={item.description}
-                    amount={item.amount}
-                    date={item.date}
-                    splitBetween={item.splitBetween}
-                  />
+                    onClick={() => {
+                      setSelectedMembers(item.splitBetween);
+                      setSelectedMembersTitle(`Members for ${item.description}`);
+                      setSelectedMembersDescription("Members who split this expense");
+                      setIsMembersDialogOpen(true);
+                    }}
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                  >
+                    <ExpenseCard
+                      description={item.description}
+                      amount={item.amount}
+                      date={item.date}
+                      splitBetween={item.splitBetween}
+                    />
+                  </div>
                 );
               } else {
                 return (
-                  <PaymentCard
+                  <div
                     key={`payment-${item.id}`}
-                    from={item.from}
-                    to={item.to}
-                    amounts={item.amounts}
-                    date={item.date}
-                  />
+                    onClick={() => {
+                      setSelectedMembers([item.from, ...item.to]);
+                      setSelectedMembersTitle("Payment Members");
+                      setSelectedMembersDescription("Members involved in this payment");
+                      setIsMembersDialogOpen(true);
+                    }}
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                  >
+                    <PaymentCard
+                      from={item.from}
+                      to={item.to}
+                      amounts={item.amounts}
+                      date={item.date}
+                    />
+                  </div>
                 );
               }
             })}
