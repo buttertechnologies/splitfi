@@ -15,6 +15,7 @@ import { ExpenseForm } from "@/components/ExpenseForm";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User } from "lucide-react";
 import { ExpenseCard } from "@/components/ExpenseCard";
+import { PaymentCard } from "@/components/PaymentCard";
 
 const dummyGroup = {
   name: "Weekend Trip to Vegas",
@@ -46,6 +47,23 @@ const dummyExpenses = [
     amount: 300.0,
     date: new Date("2024-03-16T19:00:00"),
     splitBetween: ["0x1234567890abcdef", "0x9876543210fedcba"],
+  },
+];
+
+const dummyPayments = [
+  {
+    id: 1,
+    from: "0xabcdef1234567890",
+    to: ["0x1234567890abcdef", "0x9876543210fedcba"],
+    amounts: [150.0, 75.0],
+    date: new Date("2024-03-16T10:00:00"),
+  },
+  {
+    id: 2,
+    from: "0x9876543210fedcba",
+    to: ["0x1234567890abcdef"],
+    amounts: [150.0],
+    date: new Date("2024-03-16T11:30:00"),
   },
 ];
 
@@ -136,17 +154,33 @@ export default function GroupDetailPage() {
       </div>
 
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Expenses</h2>
+        <h2 className="text-xl font-semibold mb-4">Activity</h2>
         <div className="grid gap-4">
-          {dummyExpenses.map((expense) => (
-            <ExpenseCard
-              key={expense.id}
-              description={expense.description}
-              amount={expense.amount}
-              date={expense.date}
-              splitBetween={expense.splitBetween}
-            />
-          ))}
+          {[...dummyExpenses, ...dummyPayments]
+            .sort((a, b) => b.date.getTime() - a.date.getTime())
+            .map((item) => {
+              if ('description' in item) {
+                return (
+                  <ExpenseCard
+                    key={item.id}
+                    description={item.description}
+                    amount={item.amount}
+                    date={item.date}
+                    splitBetween={item.splitBetween}
+                  />
+                );
+              } else {
+                return (
+                  <PaymentCard
+                    key={item.id}
+                    from={item.from}
+                    to={item.to}
+                    amounts={item.amounts}
+                    date={item.date}
+                  />
+                );
+              }
+            })}
         </div>
       </div>
     </div>
