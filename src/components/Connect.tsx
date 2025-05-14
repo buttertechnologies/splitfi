@@ -11,11 +11,12 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, Copy, LogOut } from "lucide-react";
+import { User, Copy, LogOut, Check } from "lucide-react";
 
 export function Connect() {
   const { user, authenticate, unauthenticate } = useCurrentFlowUser();
   const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const displayAddress =
     user.loggedIn && user.addr
@@ -33,6 +34,8 @@ export function Connect() {
   const handleCopy = async () => {
     if (user.addr) {
       await navigator.clipboard.writeText(user.addr);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
     }
   };
 
@@ -67,9 +70,19 @@ export function Connect() {
                 variant="outline"
                 className="flex-1"
                 onClick={handleCopy}
+                disabled={copied}
               >
-                <Copy className="mr-2 h-4 w-4" />
-                Copy Address
+                {copied ? (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy Address
+                  </>
+                )}
               </Button>
               <Button
                 variant="outline"
