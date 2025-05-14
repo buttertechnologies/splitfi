@@ -78,8 +78,13 @@ export default function GroupDetailPage() {
     setIsEditDialogOpen(false);
   };
 
-  const handleAddExpense = (description: string, amount: number) => {
-    console.log("Adding expense:", { description, amount });
+  const handleAddExpense = (
+    description: string,
+    amount: number,
+    splitType: 'equal' | 'custom',
+    memberAmounts: { member: string; amount: number }[]
+  ) => {
+    console.log("Adding expense:", { description, amount, splitType, memberAmounts });
     setIsAddExpenseDialogOpen(false);
   };
 
@@ -135,6 +140,7 @@ export default function GroupDetailPage() {
             <ExpenseForm
               onSubmit={handleAddExpense}
               onCancel={() => setIsAddExpenseDialogOpen(false)}
+              members={dummyGroup.members}
             />
           </DialogContent>
         </Dialog>
@@ -162,7 +168,7 @@ export default function GroupDetailPage() {
               if ('description' in item) {
                 return (
                   <ExpenseCard
-                    key={item.id}
+                    key={`expense-${item.id}`}
                     description={item.description}
                     amount={item.amount}
                     date={item.date}
@@ -172,7 +178,7 @@ export default function GroupDetailPage() {
               } else {
                 return (
                   <PaymentCard
-                    key={item.id}
+                    key={`payment-${item.id}`}
                     from={item.from}
                     to={item.to}
                     amounts={item.amounts}
