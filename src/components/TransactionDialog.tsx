@@ -19,6 +19,7 @@ interface TransactionDialogProps {
   pendingDescription?: string;
   successTitle?: string;
   successDescription?: string;
+  closeOnSuccess?: boolean;
 }
 
 export const TransactionDialog: React.FC<TransactionDialogProps> = ({
@@ -31,6 +32,7 @@ export const TransactionDialog: React.FC<TransactionDialogProps> = ({
   pendingDescription,
   successTitle,
   successDescription,
+  closeOnSuccess,
 }) => {
   const [status, setStatus] = useState<'pending' | 'success'>('pending');
   const explorerUrl = txId
@@ -43,10 +45,11 @@ export const TransactionDialog: React.FC<TransactionDialogProps> = ({
       const timer = setTimeout(() => {
         setStatus('success');
         if (onSuccess) onSuccess();
+        if (closeOnSuccess) onOpenChange(false);
       }, timeoutMs);
       return () => clearTimeout(timer);
     }
-  }, [open, timeoutMs, onSuccess]);
+  }, [open, timeoutMs, onSuccess, closeOnSuccess, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

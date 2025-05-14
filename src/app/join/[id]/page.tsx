@@ -1,8 +1,8 @@
 "use client";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User } from "lucide-react";
+import { User, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { TransactionDialog } from "@/components/TransactionDialog";
 
@@ -15,9 +15,23 @@ export default function JoinGroupPage() {
   const params = useParams();
   const { id } = params;
   const [txOpen, setTxOpen] = useState(false);
+  const [canGoToGroup, setCanGoToGroup] = useState(false);
+  const router = useRouter();
 
   const handleJoin = () => {
     setTxOpen(true);
+  };
+
+  const handleSuccess = () => {
+    setCanGoToGroup(true);
+  };
+
+  const handleGoToGroup = () => {
+    if (typeof id === 'string') {
+      router.push(`/groups/${id}`);
+    } else if (Array.isArray(id) && id[0]) {
+      router.push(`/groups/${id[0]}`);
+    }
   };
 
   return (
@@ -47,8 +61,13 @@ export default function JoinGroupPage() {
             ))}
           </div>
         </div>
-        <Button className="w-full mt-4" size="lg" onClick={handleJoin}>
-          Join Group
+        <Button
+          className={`w-full mt-4 flex items-center justify-center gap-2 ${canGoToGroup ? 'bg-green-600 hover:bg-green-700 text-white' : ''}`}
+          size="lg"
+          onClick={canGoToGroup ? handleGoToGroup : handleJoin}
+          disabled={txOpen && !canGoToGroup}
+        >
+          {canGoToGroup ? <><CheckCircle2 className="h-5 w-5" /> Go to Group</> : 'Join Group'}
         </Button>
       </div>
       <TransactionDialog
@@ -58,6 +77,8 @@ export default function JoinGroupPage() {
         pendingDescription="You are being added to the group. Please wait..."
         successTitle="You've Joined!"
         successDescription="You have been successfully added to the group."
+        onSuccess={handleSuccess}
+        closeOnSuccess={true}
       />
     </div>
   );
