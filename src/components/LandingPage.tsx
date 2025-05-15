@@ -85,8 +85,8 @@ export default function LandingPage() {
             desc="SplitFi auto-calculates and nets out what everyone owes."
           />
           <BenefitCard
-            title="Penny-level fees"
-            desc="Flow gas costs fractions of a cent, so splitting is always worth it."
+            title="Sub-penny fees"
+            desc="Flow gas costs less than a cent, so splitting is always worth it."
           />
         </div>
       </section>
