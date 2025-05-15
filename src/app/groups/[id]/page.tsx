@@ -18,7 +18,13 @@ import { ExpenseCard } from "@/components/ExpenseCard";
 import { PaymentCard } from "@/components/PaymentCard";
 import { MembersList } from "@/components/MembersList";
 import { TransactionDialog } from "@/components/TransactionDialog";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -80,17 +86,22 @@ export default function GroupDetailPage() {
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [selectedMembersTitle, setSelectedMembersTitle] = useState("");
-  const [selectedMembersDescription, setSelectedMembersDescription] = useState("");
+  const [selectedMembersDescription, setSelectedMembersDescription] =
+    useState("");
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
-  const [isPaymentAmountDialogOpen, setIsPaymentAmountDialogOpen] = useState(false);
+  const [isPaymentAmountDialogOpen, setIsPaymentAmountDialogOpen] =
+    useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
 
   // Dummy data for money owed/owing
-  const amountYouOwe = 225.50;
-  const amountOwedToYou = 150.00;
-  
+  const amountYouOwe = 225.5;
+  const amountOwedToYou = 150.0;
+
   // Calculate total group expenses from dummyExpenses
-  const totalGroupExpenses = dummyExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const totalGroupExpenses = dummyExpenses.reduce(
+    (sum, expense) => sum + expense.amount,
+    0,
+  );
 
   const handleEditGroup = (groupName: string, members: string[]) => {
     console.log("Editing group:", { groupName, members });
@@ -100,10 +111,15 @@ export default function GroupDetailPage() {
   const handleAddExpense = (
     description: string,
     amount: number,
-    splitType: 'equal' | 'custom',
-    memberAmounts: { member: string; amount: number }[]
+    splitType: "equal" | "custom",
+    memberAmounts: { member: string; amount: number }[],
   ) => {
-    console.log("Adding expense:", { description, amount, splitType, memberAmounts });
+    console.log("Adding expense:", {
+      description,
+      amount,
+      splitType,
+      memberAmounts,
+    });
     setIsAddExpenseDialogOpen(false);
     setIsTransactionDialogOpen(true);
   };
@@ -150,16 +166,17 @@ export default function GroupDetailPage() {
                 onCancel={() => setIsEditDialogOpen(false)}
                 initialName={dummyGroup.name}
                 initialMembers={dummyGroup.members}
-                groupId={typeof id === 'string' ? id : Array.isArray(id) ? id[0] : ''}
+                groupId={
+                  typeof id === "string" ? id : Array.isArray(id) ? id[0] : ""
+                }
               />
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
-      <div className="flex items-center gap-4 mb-4">
-        <h2 className="text-xl font-semibold">Group Members</h2>
-        <div 
+      <div className="flex items-center gap-4">
+        <div
           className="flex -space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
           onClick={() => {
             setSelectedMembers(dummyGroup.members);
@@ -198,7 +215,6 @@ export default function GroupDetailPage() {
           </DialogContent>
         </Dialog>
       </div>
-      <hr className="my-4 border-t border-gray-200" />
 
       {/* Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
@@ -212,7 +228,9 @@ export default function GroupDetailPage() {
             <CardDescription>All expenses in this group</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">${totalGroupExpenses.toFixed(2)}</p>
+            <p className="text-2xl font-bold">
+              ${totalGroupExpenses.toFixed(2)}
+            </p>
           </CardContent>
         </Card>
 
@@ -229,7 +247,7 @@ export default function GroupDetailPage() {
             <p className="text-2xl font-bold">${amountOwedToYou.toFixed(2)}</p>
           </CardContent>
         </Card>
-        
+
         {/* You owe */}
         <Card>
           <CardHeader className="pb-2">
@@ -241,9 +259,9 @@ export default function GroupDetailPage() {
           </CardHeader>
           <CardContent className="flex justify-between items-center">
             <p className="text-2xl font-bold">${amountYouOwe.toFixed(2)}</p>
-            <Button 
+            <Button
               onClick={() => setIsPaymentAmountDialogOpen(true)}
-              variant="default" 
+              variant="default"
               className="ml-2"
             >
               Pay people back
@@ -258,14 +276,18 @@ export default function GroupDetailPage() {
           {[...dummyExpenses, ...dummyPayments]
             .sort((a, b) => b.date.getTime() - a.date.getTime())
             .map((item) => {
-              if ('description' in item) {
+              if ("description" in item) {
                 return (
                   <div
                     key={`expense-${item.id}`}
                     onClick={() => {
                       setSelectedMembers(item.splitBetween);
-                      setSelectedMembersTitle(`Members for ${item.description}`);
-                      setSelectedMembersDescription("Members who split this expense");
+                      setSelectedMembersTitle(
+                        `Members for ${item.description}`,
+                      );
+                      setSelectedMembersDescription(
+                        "Members who split this expense",
+                      );
                       setIsMembersDialogOpen(true);
                     }}
                     className="cursor-pointer hover:opacity-80 transition-opacity"
@@ -285,7 +307,9 @@ export default function GroupDetailPage() {
                     onClick={() => {
                       setSelectedMembers([item.from, ...item.to]);
                       setSelectedMembersTitle("Payment Members");
-                      setSelectedMembersDescription("Members involved in this payment");
+                      setSelectedMembersDescription(
+                        "Members involved in this payment",
+                      );
                       setIsMembersDialogOpen(true);
                     }}
                     className="cursor-pointer hover:opacity-80 transition-opacity"
@@ -303,7 +327,10 @@ export default function GroupDetailPage() {
         </div>
       </div>
 
-      <Dialog open={isPaymentAmountDialogOpen} onOpenChange={setIsPaymentAmountDialogOpen}>
+      <Dialog
+        open={isPaymentAmountDialogOpen}
+        onOpenChange={setIsPaymentAmountDialogOpen}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Enter Payment Amount</DialogTitle>
@@ -315,7 +342,9 @@ export default function GroupDetailPage() {
             <div className="grid gap-2">
               <Label htmlFor="amount">Amount</Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  $
+                </span>
                 <Input
                   id="amount"
                   type="number"
@@ -330,12 +359,13 @@ export default function GroupDetailPage() {
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsPaymentAmountDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsPaymentAmountDialogOpen(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handlePaymentAmountSubmit}>
-              Continue
-            </Button>
+            <Button onClick={handlePaymentAmountSubmit}>Continue</Button>
           </div>
         </DialogContent>
       </Dialog>
