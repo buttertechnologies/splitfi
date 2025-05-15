@@ -156,6 +156,28 @@ export default function GroupDetailPage() {
           </Dialog>
         </div>
       </div>
+
+      <div className="flex items-center gap-4 mb-4">
+        <h2 className="text-xl font-semibold">Group Members</h2>
+        <div 
+          className="flex -space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => {
+            setSelectedMembers(dummyGroup.members);
+            setSelectedMembersTitle("Group Members");
+            setSelectedMembersDescription("List of all members in this group");
+            setIsMembersDialogOpen(true);
+          }}
+        >
+          {dummyGroup.members.map((address) => (
+            <Avatar key={address} className="border-2 border-background">
+              <AvatarFallback>
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
+          ))}
+        </div>
+      </div>
+
       <div className="flex gap-2">
         <Dialog
           open={isAddExpenseDialogOpen}
@@ -177,34 +199,6 @@ export default function GroupDetailPage() {
         </Dialog>
       </div>
       <hr className="my-4 border-t border-gray-200" />
-      <div className="mt-4">
-        <h2 className="text-xl font-semibold mb-2">Group Members</h2>
-        <div 
-          className="flex -space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => {
-            setSelectedMembers(dummyGroup.members);
-            setSelectedMembersTitle("Group Members");
-            setSelectedMembersDescription("List of all members in this group");
-            setIsMembersDialogOpen(true);
-          }}
-        >
-          {dummyGroup.members.map((address) => (
-            <Avatar key={address} className="border-2 border-background">
-              <AvatarFallback>
-                <User className="h-4 w-4" />
-              </AvatarFallback>
-            </Avatar>
-          ))}
-        </div>
-      </div>
-
-      <MembersList
-        members={selectedMembers}
-        isOpen={isMembersDialogOpen}
-        onOpenChange={setIsMembersDialogOpen}
-        title={selectedMembersTitle}
-        description={selectedMembersDescription}
-      />
 
       {/* Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
@@ -350,6 +344,14 @@ export default function GroupDetailPage() {
         open={isTransactionDialogOpen}
         onOpenChange={setIsTransactionDialogOpen}
         txId="0x1234567890abcdef"
+      />
+
+      <MembersList
+        members={selectedMembers}
+        isOpen={isMembersDialogOpen}
+        onOpenChange={setIsMembersDialogOpen}
+        title={selectedMembersTitle}
+        description={selectedMembersDescription}
       />
     </div>
   );
