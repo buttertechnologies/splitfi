@@ -39,6 +39,7 @@ const dummyExpenses = [
     amount: 450.0,
     date: new Date("2024-03-15T14:30:00"),
     splitBetween: ["0x1234567890abcdef", "0xabcdef1234567890"],
+    addedBy: "0x1234567890abcdef",
   },
   {
     id: 2,
@@ -50,6 +51,7 @@ const dummyExpenses = [
       "0xabcdef1234567890",
       "0x9876543210fedcba",
     ],
+    addedBy: "0xabcdef1234567890",
   },
   {
     id: 3,
@@ -57,6 +59,7 @@ const dummyExpenses = [
     amount: 300.0,
     date: new Date("2024-03-16T19:00:00"),
     splitBetween: ["0x1234567890abcdef", "0x9876543210fedcba"],
+    addedBy: "0x9876543210fedcba",
   },
 ];
 
@@ -271,6 +274,7 @@ export default function GroupDetailPage() {
                     amount={item.amount}
                     date={item.date}
                     splitBetween={item.splitBetween}
+                    addedBy={item.addedBy}
                   />
                 );
               } else {
