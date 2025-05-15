@@ -11,7 +11,7 @@ const Navbar = () => {
           {/* Logo/Site Name and Navigation */}
           <div className="flex items-center gap-6">
             <Link href="/" className="text-xl font-bold">
-              Divy
+              SplitFi
             </Link>
             <Link 
               href="/groups" 

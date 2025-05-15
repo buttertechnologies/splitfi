@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Divy",
+  title: "SplitFi",
   description:
     "Split group expenses on‑chain—track, share, and settle in crypto instantly and transparently.",
 };
