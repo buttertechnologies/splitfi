@@ -235,7 +235,7 @@ export default function GroupDetailPage() {
             <p className="text-2xl font-bold">${amountYouOwe.toFixed(2)}</p>
             <Button 
               onClick={() => setIsTransactionDialogOpen(true)}
-              variant="outline" 
+              variant="default" 
               className="ml-2"
             >
               Pay people back
