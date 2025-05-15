@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User } from "lucide-react";
+import { User, Receipt } from "lucide-react";
 
 interface ExpenseCardProps {
   description: string;
@@ -15,7 +15,10 @@ export function ExpenseCard({ description, amount, date, splitBetween }: Expense
     <div className="bg-card rounded-lg border p-4">
       <div className="flex justify-between items-start mb-3">
         <div>
-          <h3 className="font-medium text-lg">{description}</h3>
+          <h3 className="font-medium text-lg flex items-center gap-2">
+            <Receipt className="h-5 w-5" />
+            {description}
+          </h3>
           <p className="text-sm text-muted-foreground">
             {date.toLocaleDateString()} at{" "}
             {date.toLocaleTimeString([], {
