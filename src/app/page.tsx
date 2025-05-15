@@ -1,103 +1,204 @@
+import React from "react";
 import Image from "next/image";
+import FAQ from "../components/FAQ";
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen flex flex-col font-sans">
+      {/* HERO */}
+      <section className="relative flex flex-col items-center justify-center py-12 px-4 sm:px-12 overflow-hidden">
+        <h1 className="relative z-10 text-5xl sm:text-7xl font-extrabold leading-tight tracking-tight text-center mb-4">
+          SplitFi
+          <span className="block text-2xl sm:text-3xl font-medium mt-2">
+            Split bills. Stay friends. No waiting.
+          </span>
+        </h1>
+        <p className="relative z-10 text-lg sm:text-2xl text-center max-w-2xl mb-8">
+          Track group expenses and close the tab in one Flow-powered USDF
+          payment.
+        </p>
+        <a
+          href="#"
+          className="relative z-10 inline-flex items-center gap-2 px-8 py-4 font-bold rounded-full text-lg hover:underline transition group"
+        >
+          Start Splitting{" "}
+          <span className="group-hover:translate-x-1 transition-transform">
+            ›
+          </span>
+        </a>
+      </section>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* KEY BENEFITS */}
+      <section className="relative z-10 py-8 px-4 sm:px-12">
+        <h2 className="text-3xl sm:text-4xl font-bold mb-8 text-center">
+          Why SplitFi?
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+          <BenefitCard
+            title="Instant settlement"
+            desc="Settle up in seconds—no more waiting for bank transfers or paybacks."
+          />
+          <BenefitCard
+            title="Dollar-pegged clarity"
+            desc="Balances are always stable with USDF, a $1-backed stablecoin."
+          />
+          <BenefitCard
+            title="No more awkward math"
+            desc="SplitFi auto-calculates and nets out what everyone owes."
+          />
+          <BenefitCard
+            title="Penny-level fees"
+            desc="Flow gas costs fractions of a cent, so splitting is always worth it."
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
+      </section>
+
+      {/* FEATURE SPOTLIGHT */}
+      <section className="relative z-10 py-12 px-4 sm:px-12">
+        <h2 className="text-3xl sm:text-4xl font-bold mb-8 text-center">
+          Feature Spotlight
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+          <FeatureCard
+            feature="Auto-netting engine"
+            why="Collapses all group debts into a single, simple payment."
+          />
+          <FeatureCard
+            feature="One-tap settle"
+            why="Sign once and every balance hits $0 instantly."
+          />
+          <FeatureCard
+            feature="Pay-Spin"
+            why="Let Flow's randomness pick who pays for fun, then settle in one tap."
+          />
+          <FeatureCard
+            feature="Flexible Splits"
+            why="Split equally, assign to select people, or use percentages—no calculator needed."
+          />
+        </div>
+      </section>
+
+      {/* APP STORE BLURB */}
+      <section className="relative z-10 py-12 px-4 sm:px-12 flex flex-col items-center">
+        <blockquote className="max-w-2xl text-xl sm:text-2xl text-center font-medium px-8 py-8">
+          <span className="font-bold">SplitFi</span> keeps money from ruining
+          good times. Log shared bills, let our engine crunch who owes what, and
+          wipe the slate clean with one USDF payment on Flow. It's Splitwise
+          simplicity plus blockchain speed—no banks, no waiting, and fees that
+          round to zero. Feeling brave? Try{" "}
+          <span className="font-bold">Pay-Spin</span>: Flow's verifiable
+          randomness picks who foots the tab. Try SplitFi and make splitting
+          painless.
+        </blockquote>
+      </section>
+
+      {/* FAQ */}
+      <section className="relative z-10 py-12 px-4 sm:px-12 max-w-3xl mx-auto">
+        <h3 className="text-2xl font-bold mb-6 text-center">Quick FAQ</h3>
+        <div className="space-y-4">
+          <FAQ
+            q="Is crypto still volatile?"
+            a={
+              <span>
+                Your balances are in USDF, a dollar-pegged stablecoin issued by
+                U.S.-regulated banks.{" "}
+                <a
+                  href="https://www.coindesk.com/business/2022/01/12/us-banks-form-group-to-offer-usdf-stablecoin?utm_source=chatgpt.com"
+                  target="_blank"
+                >
+                  Learn more
+                </a>
+              </span>
+            }
+          />
+          <FAQ
+            q="How much are fees?"
+            a={
+              <span>
+                Flow gas is usually well below one cent—far cheaper than bank
+                rails.{" "}
+                <a
+                  href="https://forum.flow.com/t/proposing-transaction-fee-changes-and-flow-evm-gas-charges-for-flow-crescendo-launch/5817?utm_source=chatgpt.com"
+                  target="_blank"
+                >
+                  See details
+                </a>
+              </span>
+            }
+          />
+          <FAQ
+            q="Can you really pick a random payer fairly?"
+            a={
+              <span>
+                Yes. Flow supplies built-in verifiable randomness, so no one can
+                game the draw.{" "}
+                <a
+                  href="https://developers.flow.com/build/advanced-concepts/randomness?utm_source=chatgpt.com"
+                  target="_blank"
+                >
+                  How it works
+                </a>
+              </span>
+            }
+          />
+        </div>
+      </section>
+
+      {/* BOTTOM CTA */}
+      <section className="relative z-10 py-16 px-4 sm:px-12 flex flex-col items-center mt-12">
+        <h4 className="text-2xl sm:text-3xl font-bold mb-4 text-center">
+          Ready to settle up in seconds?
+        </h4>
+        <p className="text-lg mb-6 text-center max-w-xl">
+          Try SplitFi, start your first group, and clear the next tab before the
+          waiter's back.
+        </p>
         <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          href="#"
+          className="inline-flex items-center gap-2 px-8 py-4 font-bold rounded-full text-lg hover:underline transition group"
+        >
+          Start Splitting{" "}
+          <span className="group-hover:translate-x-1 transition-transform">
+            ›
+          </span>
+        </a>
+      </section>
+    </div>
+  );
+}
+
+function BenefitCard({
+  title,
+  desc,
+  link,
+}: {
+  title: string;
+  desc: string;
+  link?: string;
+}) {
+  return (
+    <div className="rounded-2xl p-6 flex flex-col items-start gap-2 border hover:shadow transition">
+      <div className="text-xl font-bold mb-1">{title}</div>
+      <div className="text-base mb-2">{desc}</div>
+      {link && (
+        <a
+          href={link}
           target="_blank"
           rel="noopener noreferrer"
+          className="text-xs underline"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
+          Learn more
         </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
+    </div>
+  );
+}
+
+function FeatureCard({ feature, why }: { feature: string; why: string }) {
+  return (
+    <div className="rounded-xl p-6 flex flex-col items-start gap-2 border">
+      <div className="text-lg font-bold mb-1">{feature}</div>
+      <div className="text-base">{why}</div>
     </div>
   );
 }
