@@ -1,18 +1,35 @@
 import React from "react";
 import Link from "next/link";
 import { Connect } from "./Connect";
+import { Users } from "lucide-react";
 
 const Navbar = () => {
   return (
     <nav className="w-full border-b sticky top-0 bg-background z-50">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo/Site Name */}
-          <Link href="/" className="text-xl font-bold">
-            Divy
-          </Link>
+          {/* Logo/Site Name and Navigation */}
+          <div className="flex items-center gap-6">
+            <Link href="/" className="text-xl font-bold">
+              Divy
+            </Link>
+            <Link 
+              href="/groups" 
+              className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Users className="h-4 w-4" />
+              <span>Groups</span>
+            </Link>
+            <Link 
+              href="/groups" 
+              className="sm:hidden text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Groups"
+            >
+              <Users className="h-5 w-5" />
+            </Link>
+          </div>
 
-          {/* Navigation Items */}
+          {/* Right side items */}
           <div className="flex items-center gap-4">
             <Connect />
           </div>
