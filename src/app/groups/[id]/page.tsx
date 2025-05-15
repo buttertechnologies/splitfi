@@ -67,6 +67,7 @@ const dummyPayments = [
     to: ["0x1234567890abcdef", "0x9876543210fedcba"],
     amounts: [150.0, 75.0],
     date: new Date("2024-03-16T10:00:00"),
+    transactionId: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
   },
   {
     id: 2,
@@ -74,6 +75,7 @@ const dummyPayments = [
     to: ["0x1234567890abcdef"],
     amounts: [150.0],
     date: new Date("2024-03-16T11:30:00"),
+    transactionId: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
   },
 ];
 
@@ -279,6 +281,7 @@ export default function GroupDetailPage() {
                     to={item.to}
                     amounts={item.amounts}
                     date={item.date}
+                    transactionId={item.transactionId}
                   />
                 );
               }

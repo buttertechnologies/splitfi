@@ -1,18 +1,20 @@
 "use client";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, CreditCard } from "lucide-react";
+import { User, CreditCard, ExternalLink } from "lucide-react";
 import { MembersList } from "@/components/MembersList";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface PaymentCardProps {
   from: string;
   to: string[];
   amounts: number[]; // Array of amounts corresponding to each recipient
   date: Date;
+  transactionId: string;
 }
 
-export function PaymentCard({ from, to, amounts, date }: PaymentCardProps) {
+export function PaymentCard({ from, to, amounts, date, transactionId }: PaymentCardProps) {
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
   const totalAmount = amounts.reduce((sum, amount) => sum + amount, 0);
 
@@ -97,6 +99,21 @@ export function PaymentCard({ from, to, amounts, date }: PaymentCardProps) {
         onOpenChange={setIsMembersDialogOpen}
         title="Payment Members"
         description="Members involved in this payment"
+        footer={
+          <div className="mt-4 pt-4 border-t">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(`https://flowscan.org/transaction/${transactionId}`, '_blank');
+              }}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View on Flowscan
+            </Button>
+          </div>
+        }
       />
     </>
   );

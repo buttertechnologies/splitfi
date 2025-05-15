@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ReactNode } from "react";
 
 interface MembersListProps {
   members: string[];
@@ -14,6 +15,7 @@ interface MembersListProps {
   onOpenChange: (open: boolean) => void;
   title?: string;
   description?: string;
+  footer?: ReactNode;
 }
 
 export function MembersList({
@@ -22,6 +24,7 @@ export function MembersList({
   onOpenChange,
   title = "Group Members",
   description = "List of all members in this group",
+  footer,
 }: MembersListProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -42,6 +45,7 @@ export function MembersList({
             </div>
           ))}
         </div>
+        {footer}
       </DialogContent>
     </Dialog>
   );
