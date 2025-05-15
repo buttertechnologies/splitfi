@@ -16,7 +16,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, CreditCard, Wallet, Receipt } from "lucide-react";
 import { ExpenseCard } from "@/components/ExpenseCard";
 import { PaymentCard } from "@/components/PaymentCard";
-import { MembersList } from "@/components/MembersList";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import {
   Card,
@@ -83,14 +82,8 @@ export default function GroupDetailPage() {
   const { id } = params;
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
-  const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [selectedMembersTitle, setSelectedMembersTitle] = useState("");
-  const [selectedMembersDescription, setSelectedMembersDescription] =
-    useState("");
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
-  const [isPaymentAmountDialogOpen, setIsPaymentAmountDialogOpen] =
-    useState(false);
+  const [isPaymentAmountDialogOpen, setIsPaymentAmountDialogOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
 
   // Dummy data for money owed/owing
@@ -176,15 +169,7 @@ export default function GroupDetailPage() {
       </div>
 
       <div className="flex items-center gap-4">
-        <div
-          className="flex -space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => {
-            setSelectedMembers(dummyGroup.members);
-            setSelectedMembersTitle("Group Members");
-            setSelectedMembersDescription("List of all members in this group");
-            setIsMembersDialogOpen(true);
-          }}
-        >
+        <div className="flex -space-x-2">
           {dummyGroup.members.map((address) => (
             <Avatar key={address} className="border-2 border-background">
               <AvatarFallback>
@@ -278,49 +263,23 @@ export default function GroupDetailPage() {
             .map((item) => {
               if ("description" in item) {
                 return (
-                  <div
+                  <ExpenseCard
                     key={`expense-${item.id}`}
-                    onClick={() => {
-                      setSelectedMembers(item.splitBetween);
-                      setSelectedMembersTitle(
-                        `Members for ${item.description}`,
-                      );
-                      setSelectedMembersDescription(
-                        "Members who split this expense",
-                      );
-                      setIsMembersDialogOpen(true);
-                    }}
-                    className="cursor-pointer hover:opacity-80 transition-opacity"
-                  >
-                    <ExpenseCard
-                      description={item.description}
-                      amount={item.amount}
-                      date={item.date}
-                      splitBetween={item.splitBetween}
-                    />
-                  </div>
+                    description={item.description}
+                    amount={item.amount}
+                    date={item.date}
+                    splitBetween={item.splitBetween}
+                  />
                 );
               } else {
                 return (
-                  <div
+                  <PaymentCard
                     key={`payment-${item.id}`}
-                    onClick={() => {
-                      setSelectedMembers([item.from, ...item.to]);
-                      setSelectedMembersTitle("Payment Members");
-                      setSelectedMembersDescription(
-                        "Members involved in this payment",
-                      );
-                      setIsMembersDialogOpen(true);
-                    }}
-                    className="cursor-pointer hover:opacity-80 transition-opacity"
-                  >
-                    <PaymentCard
-                      from={item.from}
-                      to={item.to}
-                      amounts={item.amounts}
-                      date={item.date}
-                    />
-                  </div>
+                    from={item.from}
+                    to={item.to}
+                    amounts={item.amounts}
+                    date={item.date}
+                  />
                 );
               }
             })}
@@ -374,14 +333,6 @@ export default function GroupDetailPage() {
         open={isTransactionDialogOpen}
         onOpenChange={setIsTransactionDialogOpen}
         txId="0x1234567890abcdef"
-      />
-
-      <MembersList
-        members={selectedMembers}
-        isOpen={isMembersDialogOpen}
-        onOpenChange={setIsMembersDialogOpen}
-        title={selectedMembersTitle}
-        description={selectedMembersDescription}
       />
     </div>
   );
