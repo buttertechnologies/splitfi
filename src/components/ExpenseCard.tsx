@@ -10,9 +10,10 @@ interface ExpenseCardProps {
   amount: number;
   date: Date;
   splitBetween: string[];
+  addedBy: string;
 }
 
-export function ExpenseCard({ description, amount, date, splitBetween }: ExpenseCardProps) {
+export function ExpenseCard({ description, amount, date, splitBetween, addedBy }: ExpenseCardProps) {
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
 
   return (
@@ -61,6 +62,23 @@ export function ExpenseCard({ description, amount, date, splitBetween }: Expense
         onOpenChange={setIsMembersDialogOpen}
         title={`Members for ${description}`}
         description="Members who split this expense"
+        footer={
+          <div className="mt-4 pt-4 border-t">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback>
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="text-sm font-medium">Added by</div>
+                <div className="text-sm text-muted-foreground font-mono">
+                  {addedBy.slice(0, 6)}...{addedBy.slice(-4)}
+                </div>
+              </div>
+            </div>
+          </div>
+        }
       />
     </>
   );
