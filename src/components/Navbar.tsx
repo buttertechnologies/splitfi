@@ -1,9 +1,23 @@
+"use client";
 import React from "react";
 import Link from "next/link";
 import { Connect } from "./Connect";
 import { Users } from "lucide-react";
+import { useCurrentFlowUser } from "@onflow/kit";
+import { useRouter } from "next/navigation";
 
 const Navbar = () => {
+  const { user } = useCurrentFlowUser();
+  const router = useRouter();
+
+  const handleConnect = () => {
+    router.push("/groups");
+  };
+
+  const handleDisconnect = () => {
+    router.push("/");
+  };
+
   return (
     <nav className="w-full border-b sticky top-0 bg-background z-50">
       <div className="container mx-auto px-4">
@@ -11,27 +25,31 @@ const Navbar = () => {
           {/* Logo/Site Name and Navigation */}
           <div className="flex items-center gap-6">
             <Link href="/" className="text-xl font-bold">
-              Divy
+              SplitFi
             </Link>
-            <Link 
-              href="/groups" 
-              className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Users className="h-4 w-4" />
-              <span>Groups</span>
-            </Link>
-            <Link 
-              href="/groups" 
-              className="sm:hidden text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Groups"
-            >
-              <Users className="h-5 w-5" />
-            </Link>
+            {user?.loggedIn && (
+              <>
+                <Link 
+                  href="/groups" 
+                  className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Users className="h-4 w-4" />
+                  <span>Groups</span>
+                </Link>
+                <Link 
+                  href="/groups" 
+                  className="sm:hidden text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Groups"
+                >
+                  <Users className="h-5 w-5" />
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Right side items */}
           <div className="flex items-center gap-4">
-            <Connect />
+            <Connect onConnect={handleConnect} onDisconnect={handleDisconnect} />
           </div>
         </div>
       </div>
