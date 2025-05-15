@@ -32,6 +32,15 @@ export default function LandingPage() {
     <div className="min-h-screen flex flex-col font-sans">
       {/* HERO */}
       <section className="relative flex flex-col items-center justify-center py-12 px-4 sm:px-12 overflow-hidden">
+        {/* Off-centered overlapping circles background */}
+        <div className="absolute -top-32 -left-32 w-[500px] h-[500px] z-0 pointer-events-none">
+          <svg width="500" height="500" viewBox="0 0 500 500" fill="none" className="w-full h-full">
+            <circle cx="200" cy="200" r="180" fill="#fde68a" opacity="0.18"/>
+            <circle cx="320" cy="280" r="140" fill="#a7f3d0" opacity="0.15"/>
+            <circle cx="120" cy="320" r="100" fill="#fca5a5" opacity="0.12"/>
+          </svg>
+        </div>
+        {/* End background */}
         <h1 className="relative z-10 text-5xl sm:text-7xl font-extrabold leading-tight tracking-tight text-center mb-4">
           SplitFi
           <span className="block text-2xl sm:text-3xl font-medium mt-2">
