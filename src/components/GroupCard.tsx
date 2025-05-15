@@ -3,13 +3,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { GroupSummary } from "@/types/models";
 
 interface GroupCardProps {
   id: string;
-  name: string;
+  group: GroupSummary;
 }
 
-export function GroupCard({ id, name }: GroupCardProps) {
+export function GroupCard({ id, group }: GroupCardProps) {
   // Dummy Flow addresses for now
   const dummyMembers = [
     "0x1234567890abcdef",
@@ -28,7 +29,7 @@ export function GroupCard({ id, name }: GroupCardProps) {
   return (
     <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
       <CardHeader>
-        <CardTitle>{name}</CardTitle>
+        <CardTitle>{group.name}</CardTitle>
         <div className="text-2xl font-bold mt-1">{formattedAmount}</div>
         <div className="text-sm text-muted-foreground mb-2">You owe: {formattedYouOwe}</div>
         <div className="flex -space-x-2 mt-2">

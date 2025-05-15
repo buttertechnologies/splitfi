@@ -3,7 +3,7 @@ import "Divy"
 /**
  * Creates a new group and stores the membership in the account's storage.
  */
-transaction(name: String) {
+transaction(name: String, invitees: [Address]) {
     var membershipCollectionRef: &Divy.MembershipCollection?
 
     prepare(account: auth(SaveValue, BorrowValue, PublishCapability, UnpublishCapability, IssueStorageCapabilityController) &Account) {
@@ -44,5 +44,10 @@ transaction(name: String) {
 
         // Store the membership in the account
         self.membershipCollectionRef!.addMembership(membership: <-membership)
+
+        // Invite the members
+        for invitee in invitees {
+            adminRef.inviteMember(address: invitee)
+        }
     }
 }

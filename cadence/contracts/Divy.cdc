@@ -1,4 +1,5 @@
 import "Crypto"
+
 access(all)
 contract Divy {
     access(all) let groups: {UInt64: Bool}

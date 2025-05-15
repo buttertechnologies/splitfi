@@ -1,6 +1,6 @@
 "use client";
 
-import { useFlowQuery } from "@onflow/kit";
+import { useCurrentFlowUser } from "@onflow/kit";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,31 +13,21 @@ import {
 import { useState } from "react";
 import { GroupForm } from "@/components/GroupForm";
 import { GroupCard } from "@/components/GroupCard";
+import { useGroupsSummary } from "@/hooks/useGroupsSummary";
+import { useCreateGroup } from "@/hooks/useCreateGroup";
 
 export default function GroupsPage() {
   const [isOpen, setIsOpen] = useState(false);
-  const { data, isLoading, error } = useFlowQuery({
-    cadence: `
-      access(all)
-      fun main(): [String] {
-          return [
-              "Mexico City Trip 2024",
-              "Weekly Dinner Club",
-              "Ski Weekend - Tahoe",
-              "Beach House - Malibu",
-              "Birthday Party - Sarah",
-              "Camping Trip - Yosemite",
-              "Concert - Taylor Swift",
-              "Apartment Utilities",
-              "Office Lunch Pool",
-              "Wedding - Mike & Lisa"
-          ]
-      }
-    `,
-  });
+  const address = useCurrentFlowUser().user.addr;
+  const { data: groups, isLoading, error } = useGroupsSummary(address);
+  const { data: user, createGroup } = useCreateGroup()
 
   const handleCreateGroup = (groupName: string, members: string[]) => {
     console.log("Creating group:", { groupName, members });
+    createGroup({
+      name: groupName,
+      invitees: members,
+    })
     setIsOpen(false);
   };
 
@@ -78,8 +68,8 @@ export default function GroupsPage() {
         </Dialog>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {(data as string[])?.map((group, index) => (
-          <GroupCard key={index} id={String(index)} name={group} />
+        {groups?.map((group, index) => (
+          <GroupCard key={index} id={String(index)} group={group} />
         ))}
       </div>
     </div>
