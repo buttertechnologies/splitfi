@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,21 +12,44 @@ import { Button } from "@/components/ui/button";
 interface TransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  status: "pending" | "success";
   txId?: string;
   timeoutMs?: number;
+  onSuccess?: () => void;
+  pendingTitle?: string;
+  pendingDescription?: string;
+  successTitle?: string;
+  successDescription?: string;
+  closeOnSuccess?: boolean;
 }
 
 export const TransactionDialog: React.FC<TransactionDialogProps> = ({
   open,
   onOpenChange,
-  status,
   txId,
-  timeoutMs = 2000,
+  timeoutMs = 1500,
+  onSuccess,
+  pendingTitle,
+  pendingDescription,
+  successTitle,
+  successDescription,
+  closeOnSuccess,
 }) => {
+  const [status, setStatus] = useState<'pending' | 'success'>('pending');
   const explorerUrl = txId
     ? `https://testnet.flowscan.org/transaction/${txId}`
     : undefined;
+
+  useEffect(() => {
+    if (open) {
+      setStatus('pending');
+      const timer = setTimeout(() => {
+        setStatus('success');
+        if (onSuccess) onSuccess();
+        if (closeOnSuccess) onOpenChange(false);
+      }, timeoutMs);
+      return () => clearTimeout(timer);
+    }
+  }, [open, timeoutMs, onSuccess, closeOnSuccess, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -38,12 +61,14 @@ export const TransactionDialog: React.FC<TransactionDialogProps> = ({
             ) : (
               <CheckCircle2 className="text-green-500 animate-pop" size={48} />
             )}
-            {status === "pending" ? "Transaction Pending" : "Transaction Successful"}
+            {status === "pending"
+              ? pendingTitle || "Transaction Pending"
+              : successTitle || "Transaction Successful"}
           </DialogTitle>
           <DialogDescription className="text-center mt-2">
             {status === "pending"
-              ? "Your transaction is being processed. Please wait..."
-              : "Your transaction was successful!"}
+              ? pendingDescription || "Your transaction is being processed. Please wait..."
+              : successDescription || "Your transaction was successful!"}
           </DialogDescription>
         </DialogHeader>
         {status === "success" && explorerUrl && (
