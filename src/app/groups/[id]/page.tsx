@@ -19,6 +19,8 @@ import { PaymentCard } from "@/components/PaymentCard";
 import { MembersList } from "@/components/MembersList";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const dummyGroup = {
   name: "Weekend Trip to Vegas",
@@ -80,6 +82,8 @@ export default function GroupDetailPage() {
   const [selectedMembersTitle, setSelectedMembersTitle] = useState("");
   const [selectedMembersDescription, setSelectedMembersDescription] = useState("");
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
+  const [isPaymentAmountDialogOpen, setIsPaymentAmountDialogOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState("");
 
   // Dummy data for money owed/owing
   const amountYouOwe = 225.50;
@@ -101,6 +105,16 @@ export default function GroupDetailPage() {
   ) => {
     console.log("Adding expense:", { description, amount, splitType, memberAmounts });
     setIsAddExpenseDialogOpen(false);
+    setIsTransactionDialogOpen(true);
+  };
+
+  const handlePaymentAmountSubmit = () => {
+    const amount = parseFloat(paymentAmount);
+    if (isNaN(amount) || amount <= 0) {
+      return;
+    }
+    setIsPaymentAmountDialogOpen(false);
+    setPaymentAmount("");
     setIsTransactionDialogOpen(true);
   };
 
@@ -234,7 +248,7 @@ export default function GroupDetailPage() {
           <CardContent className="flex justify-between items-center">
             <p className="text-2xl font-bold">${amountYouOwe.toFixed(2)}</p>
             <Button 
-              onClick={() => setIsTransactionDialogOpen(true)}
+              onClick={() => setIsPaymentAmountDialogOpen(true)}
               variant="default" 
               className="ml-2"
             >
@@ -294,6 +308,43 @@ export default function GroupDetailPage() {
             })}
         </div>
       </div>
+
+      <Dialog open={isPaymentAmountDialogOpen} onOpenChange={setIsPaymentAmountDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Enter Payment Amount</DialogTitle>
+            <DialogDescription>
+              How much would you like to pay back?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="amount">Amount</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                <Input
+                  id="amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  className="pl-7"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsPaymentAmountDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handlePaymentAmountSubmit}>
+              Continue
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <TransactionDialog
         open={isTransactionDialogOpen}
