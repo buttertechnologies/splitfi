@@ -13,11 +13,12 @@ import {
 import { GroupForm } from "@/components/GroupForm";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User } from "lucide-react";
+import { User, CreditCard, Wallet, Receipt } from "lucide-react";
 import { ExpenseCard } from "@/components/ExpenseCard";
 import { PaymentCard } from "@/components/PaymentCard";
 import { MembersList } from "@/components/MembersList";
 import { TransactionDialog } from "@/components/TransactionDialog";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const dummyGroup = {
   name: "Weekend Trip to Vegas",
@@ -79,6 +80,13 @@ export default function GroupDetailPage() {
   const [selectedMembersTitle, setSelectedMembersTitle] = useState("");
   const [selectedMembersDescription, setSelectedMembersDescription] = useState("");
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
+
+  // Dummy data for money owed/owing
+  const amountYouOwe = 225.50;
+  const amountOwedToYou = 150.00;
+  
+  // Calculate total group expenses from dummyExpenses
+  const totalGroupExpenses = dummyExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
   const handleEditGroup = (groupName: string, members: string[]) => {
     console.log("Editing group:", { groupName, members });
@@ -183,6 +191,58 @@ export default function GroupDetailPage() {
         title={selectedMembersTitle}
         description={selectedMembersDescription}
       />
+
+      {/* Cards Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+        {/* Total Group Expenses */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center">
+              <Receipt className="mr-2 h-5 w-5" />
+              Total Group Expenses
+            </CardTitle>
+            <CardDescription>All expenses in this group</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">${totalGroupExpenses.toFixed(2)}</p>
+          </CardContent>
+        </Card>
+
+        {/* You are owed */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center">
+              <Wallet className="mr-2 h-5 w-5" />
+              You are owed
+            </CardTitle>
+            <CardDescription>Money others need to pay you</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">${amountOwedToYou.toFixed(2)}</p>
+          </CardContent>
+        </Card>
+        
+        {/* You owe */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center">
+              <CreditCard className="mr-2 h-5 w-5" />
+              You owe
+            </CardTitle>
+            <CardDescription>Money you need to pay others</CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-between items-center">
+            <p className="text-2xl font-bold">${amountYouOwe.toFixed(2)}</p>
+            <Button 
+              onClick={() => setIsTransactionDialogOpen(true)}
+              variant="outline" 
+              className="ml-2"
+            >
+              Pay people back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Activity</h2>
