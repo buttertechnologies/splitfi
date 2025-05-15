@@ -4,9 +4,20 @@ import Link from "next/link";
 import { Connect } from "./Connect";
 import { Users } from "lucide-react";
 import { useCurrentFlowUser } from "@onflow/kit";
+import { useRouter } from "next/navigation";
 
 const Navbar = () => {
   const { user } = useCurrentFlowUser();
+  const router = useRouter();
+
+  const handleConnect = () => {
+    router.push("/groups");
+  };
+
+  const handleDisconnect = () => {
+    router.push("/");
+  };
+
   return (
     <nav className="w-full border-b sticky top-0 bg-background z-50">
       <div className="container mx-auto px-4">
@@ -38,7 +49,7 @@ const Navbar = () => {
 
           {/* Right side items */}
           <div className="flex items-center gap-4">
-            <Connect />
+            <Connect onConnect={handleConnect} onDisconnect={handleDisconnect} />
           </div>
         </div>
       </div>
