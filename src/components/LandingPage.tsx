@@ -139,13 +139,7 @@ export default function LandingPage() {
             a={
               <span>
                 Your balances are in USDF, a dollar-pegged stablecoin issued by
-                U.S.-regulated banks.{" "}
-                <a
-                  href="https://www.coindesk.com/business/2022/01/12/us-banks-form-group-to-offer-usdf-stablecoin?utm_source=chatgpt.com"
-                  target="_blank"
-                >
-                  Learn more
-                </a>
+                U.S.-regulated banks.
               </span>
             }
           />
@@ -154,7 +148,7 @@ export default function LandingPage() {
             a={
               <span>
                 Flow gas is usually well below one cent—far cheaper than bank
-                rails.{" "}
+                rails.{' '}
                 <a
                   href="https://forum.flow.com/t/proposing-transaction-fee-changes-and-flow-evm-gas-charges-for-flow-crescendo-launch/5817?utm_source=chatgpt.com"
                   target="_blank"
@@ -169,13 +163,29 @@ export default function LandingPage() {
             a={
               <span>
                 Yes. Flow supplies built-in verifiable randomness, so no one can
-                game the draw.{" "}
+                game the draw.{' '}
                 <a
                   href="https://developers.flow.com/build/advanced-concepts/randomness?utm_source=chatgpt.com"
                   target="_blank"
                 >
                   How it works
                 </a>
+              </span>
+            }
+          />
+          <FAQ
+            q="What is Flow?"
+            a={
+              <span>
+                Flow is a fast, secure, and developer-friendly blockchain built for consumer applications like SplitFi. It powers instant, low-fee payments and enables features like verifiable randomness for fair group settlements.{' '}
+                <a
+                  href="https://www.flow.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  Learn more about Flow
+                </a>.
               </span>
             }
           />
