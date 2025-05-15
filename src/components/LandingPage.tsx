@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useCurrentFlowUser } from "@onflow/kit";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -9,13 +9,22 @@ import FAQ from "./FAQ";
 export default function LandingPage() {
   const { user, authenticate } = useCurrentFlowUser();
   const router = useRouter();
+  const [waitingForLogin, setWaitingForLogin] = useState(false);
+
+  useEffect(() => {
+    if (waitingForLogin && user?.loggedIn) {
+      router.push("/groups");
+      setWaitingForLogin(false);
+    }
+  }, [waitingForLogin, user, router]);
 
   const handleLoginAndRedirect = async () => {
     if (user?.loggedIn) {
       router.push("/groups");
     } else {
+      setWaitingForLogin(true);
       await authenticate();
-      router.push("/groups");
+      // Do not redirect here; useEffect will handle it
     }
   };
 
