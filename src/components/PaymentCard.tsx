@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User } from "lucide-react";
+import { User, CreditCard } from "lucide-react";
 
 interface PaymentCardProps {
   from: string;
@@ -17,7 +17,10 @@ export function PaymentCard({ from, to, amounts, date }: PaymentCardProps) {
     <div className="bg-card rounded-lg border p-4">
       <div className="flex justify-between items-start mb-3">
         <div>
-          <h3 className="font-medium text-lg">Payment Settlement</h3>
+          <h3 className="font-medium text-lg flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Payment Settlement
+          </h3>
           <p className="text-sm text-muted-foreground">
             {date.toLocaleDateString()} at{" "}
             {date.toLocaleTimeString([], {
