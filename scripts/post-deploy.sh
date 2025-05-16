@@ -1,0 +1,1 @@
+flow transactions send ./cadence/mocks/mint-mock-tokens.cdc
