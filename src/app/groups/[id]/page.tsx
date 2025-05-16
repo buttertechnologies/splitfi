@@ -13,7 +13,7 @@ import {
 import { GroupForm } from "@/components/GroupForm";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, CreditCard, Wallet, Receipt } from "lucide-react";
+import { User, CreditCard, Wallet, Receipt, Loader2, Dice6, PartyPopper } from "lucide-react";
 import { ExpenseCard } from "@/components/ExpenseCard";
 import { PaymentCard } from "@/components/PaymentCard";
 import { TransactionDialog } from "@/components/TransactionDialog";
@@ -90,6 +90,9 @@ export default function GroupDetailPage() {
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
   const [isPaymentAmountDialogOpen, setIsPaymentAmountDialogOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
+  const [isRandomPayerDialogOpen, setIsRandomPayerDialogOpen] = useState(false);
+  const [showRevealButton, setShowRevealButton] = useState(false);
+  const [randomPayer, setRandomPayer] = useState<string | null>(null);
 
   // Dummy data for money owed/owing
   const amountYouOwe = 225.5;
@@ -109,7 +112,7 @@ export default function GroupDetailPage() {
   const handleAddExpense = (
     description: string,
     amount: number,
-    splitType: "equal" | "custom",
+    splitType: "equal" | "custom" | "random",
     memberAmounts: { member: string; amount: number }[],
   ) => {
     console.log("Adding expense:", {
@@ -119,7 +122,16 @@ export default function GroupDetailPage() {
       memberAmounts,
     });
     setIsAddExpenseDialogOpen(false);
-    setIsTransactionDialogOpen(true);
+    if (splitType === "random") {
+      setIsRandomPayerDialogOpen(true);
+      setShowRevealButton(false);
+      setRandomPayer(null);
+      setTimeout(() => {
+        setShowRevealButton(true);
+      }, 2500); // 2.5 seconds
+    } else {
+      setIsTransactionDialogOpen(true);
+    }
   };
 
   const handlePaymentAmountSubmit = () => {
@@ -333,6 +345,53 @@ export default function GroupDetailPage() {
             </Button>
             <Button onClick={handlePaymentAmountSubmit}>Continue</Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isRandomPayerDialogOpen} onOpenChange={setIsRandomPayerDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] flex flex-col items-center">
+          <DialogHeader>
+            <DialogTitle>Choosing a random payer…</DialogTitle>
+            <DialogDescription>
+              Using Flow's on-chain randomness to select who pays for this expense.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center py-6">
+            {randomPayer ? null : (
+              <>
+                <Dice6 className={`h-12 w-12 text-primary mb-4 ${!showRevealButton ? 'animate-bounce' : ''}`} />
+                {!showRevealButton && (
+                  <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
+                )}
+              </>
+            )}
+          </div>
+          {showRevealButton && !randomPayer && (
+            <Button
+              onClick={() => {
+                // For now, just pick a random member and show it
+                const members = dummyGroup.members;
+                const picked = members[Math.floor(Math.random() * members.length)];
+                setRandomPayer(picked);
+                setShowRevealButton(false);
+              }}
+              className="mt-4"
+            >
+              Reveal
+            </Button>
+          )}
+          {randomPayer && (
+            <div className="mt-6 text-center w-full flex flex-col items-center">
+              <PartyPopper className="h-10 w-10 text-primary mb-2 animate-pop" />
+              <p className="text-lg font-semibold mb-2">Selected payer:</p>
+              <p className="text-xl font-mono text-primary mb-6">
+                {randomPayer.slice(0, 6)}...{randomPayer.slice(-4)}
+              </p>
+              <Button onClick={() => setIsRandomPayerDialogOpen(false)}>
+                Done
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
