@@ -5,13 +5,13 @@ import "Divy"
  */
 access(all) contract DivyDto {
     access(all) struct MemberExpenseDto {
-        access(all) let name: String
+        access(all) let description: String
         access(all) let amount: UFix64
         access(all) let timestamp: UFix64
         access(all) let debtors: {Address: UFix64}
 
         init(expense: &Divy.MemberExpense) {
-            self.name = expense.description
+            self.description = expense.description
             self.amount = expense.amount
             self.timestamp = expense.timestamp
             self.debtors = *expense.debtors
