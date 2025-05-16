@@ -37,6 +37,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useGroup } from "@/hooks/useGroup";
 import { useAddExpense } from "@/hooks/useAddExpense";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface Member {
   address: string;
@@ -371,10 +372,7 @@ export default function GroupDetailPage() {
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="amount">Amount</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  $
-                </span>
+              <div className="flex w-full items-center space-x-2">
                 <Input
                   id="amount"
                   type="number"
@@ -383,8 +381,24 @@ export default function GroupDetailPage() {
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
                   placeholder="Enter amount"
-                  className="pl-7"
+                  className="flex-1"
                 />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setPaymentAmount("100")}
+                      >
+                        Max
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>This is your max account balance.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
           </div>
