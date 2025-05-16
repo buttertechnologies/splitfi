@@ -14,13 +14,13 @@ interface MemberAmount {
 }
 
 interface ExpenseFormProps {
-  onSubmit: (description: string, amount: number, splitType: 'equal' | 'custom', memberAmounts: MemberAmount[]) => void;
+  onSubmit: (description: string, amount: number, splitType: 'equal' | 'custom' | 'random', memberAmounts: MemberAmount[]) => void;
   onCancel: () => void;
   members: string[];
 }
 
 export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
-  const [splitType, setSplitType] = useState<'equal' | 'custom'>('equal');
+  const [splitType, setSplitType] = useState<'equal' | 'custom' | 'random'>('equal');
   const [selectedMembers, setSelectedMembers] = useState<string[]>(members);
   const [memberAmounts, setMemberAmounts] = useState<MemberAmount[]>(
     members.map(member => ({ member, amount: 0 }))
@@ -75,7 +75,7 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
     }
   };
 
-  const handleSplitTypeChange = (value: 'equal' | 'custom') => {
+  const handleSplitTypeChange = (value: 'equal' | 'custom' | 'random') => {
     setSplitType(value);
     if (value === 'equal') {
       // When switching to equal split, select all members by default
@@ -141,6 +141,7 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
           <SelectContent>
             <SelectItem value="equal">Split equally among everyone</SelectItem>
             <SelectItem value="custom">Split with custom amounts</SelectItem>
+            <SelectItem value="random">Pick someone at random to pay</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -171,6 +172,12 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
               Each person will pay: ${(totalAmount / selectedMembers.length).toFixed(2)}
             </div>
           )}
+        </div>
+      ) : splitType === 'random' ? (
+        <div className="grid gap-2">
+          <div className="text-sm text-muted-foreground">
+            The payer will be randomly selected when the expense is added.
+          </div>
         </div>
       ) : (
         <div className="grid gap-2">
