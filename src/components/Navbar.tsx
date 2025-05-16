@@ -2,7 +2,7 @@
 import React from "react";
 import Link from "next/link";
 import { Connect } from "./Connect";
-import { Users } from "lucide-react";
+import { Users, Bell } from "lucide-react";
 import { useCurrentFlowUser } from "@onflow/kit";
 import { useRouter } from "next/navigation";
 
@@ -49,6 +49,18 @@ const Navbar = () => {
 
           {/* Right side items */}
           <div className="flex items-center gap-4">
+            {user?.loggedIn && (
+              <Link 
+                href="/invites" 
+                className="relative text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Pending Invites"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
+                  2
+                </span>
+              </Link>
+            )}
             <Connect onConnect={handleConnect} onDisconnect={handleDisconnect} />
           </div>
         </div>

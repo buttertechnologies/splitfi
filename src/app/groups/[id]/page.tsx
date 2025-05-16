@@ -17,6 +17,7 @@ import { User, CreditCard, Wallet, Receipt, Loader2, Dice6, PartyPopper } from "
 import { ExpenseCard } from "@/components/ExpenseCard";
 import { PaymentCard } from "@/components/PaymentCard";
 import { TransactionDialog } from "@/components/TransactionDialog";
+import { MembersList } from "@/components/MembersList";
 import {
   Card,
   CardContent,
@@ -27,9 +28,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+interface Member {
+  address: string;
+  status?: "pending" | "active";
+}
+
 const dummyGroup = {
   name: "Weekend Trip to Vegas",
-  members: ["0x1234567890abcdef", "0xabcdef1234567890", "0x9876543210fedcba"],
+  members: [
+    { address: "0x1234567890abcdef", status: "active" },
+    { address: "0xabcdef1234567890", status: "pending" },
+    { address: "0x9876543210fedcba", status: "active" },
+    { address: "0x1111111111111111", status: "pending" },
+  ] as Member[],
 };
 
 const dummyExpenses = [
@@ -89,6 +100,7 @@ export default function GroupDetailPage() {
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
   const [isPaymentAmountDialogOpen, setIsPaymentAmountDialogOpen] = useState(false);
+  const [isMembersListOpen, setIsMembersListOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [isRandomPayerDialogOpen, setIsRandomPayerDialogOpen] = useState(false);
   const [showRevealButton, setShowRevealButton] = useState(false);
@@ -175,7 +187,7 @@ export default function GroupDetailPage() {
                 onSubmit={handleEditGroup}
                 onCancel={() => setIsEditDialogOpen(false)}
                 initialName={dummyGroup.name}
-                initialMembers={dummyGroup.members}
+                initialMembers={dummyGroup.members.map(m => m.address)}
                 groupId={
                   typeof id === "string" ? id : Array.isArray(id) ? id[0] : ""
                 }
@@ -186,15 +198,18 @@ export default function GroupDetailPage() {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="flex -space-x-2">
-          {dummyGroup.members.map((address) => (
-            <Avatar key={address} className="border-2 border-background">
+        <button 
+          onClick={() => setIsMembersListOpen(true)}
+          className="flex -space-x-2 hover:opacity-80 transition-opacity cursor-pointer"
+        >
+          {dummyGroup.members.map((member) => (
+            <Avatar key={member.address} className="border-2 border-background">
               <AvatarFallback>
                 <User className="h-4 w-4" />
               </AvatarFallback>
             </Avatar>
           ))}
-        </div>
+        </button>
       </div>
 
       <div className="flex gap-2">
@@ -212,7 +227,7 @@ export default function GroupDetailPage() {
             <ExpenseForm
               onSubmit={handleAddExpense}
               onCancel={() => setIsAddExpenseDialogOpen(false)}
-              members={dummyGroup.members}
+              members={dummyGroup.members.map(m => m.address)}
             />
           </DialogContent>
         </Dialog>
@@ -372,7 +387,7 @@ export default function GroupDetailPage() {
                 // For now, just pick a random member and show it
                 const members = dummyGroup.members;
                 const picked = members[Math.floor(Math.random() * members.length)];
-                setRandomPayer(picked);
+                setRandomPayer(picked.address);
                 setShowRevealButton(false);
               }}
               className="mt-4"
@@ -399,6 +414,12 @@ export default function GroupDetailPage() {
         open={isTransactionDialogOpen}
         onOpenChange={setIsTransactionDialogOpen}
         txId="0x1234567890abcdef"
+      />
+
+      <MembersList
+        members={dummyGroup.members}
+        isOpen={isMembersListOpen}
+        onOpenChange={setIsMembersListOpen}
       />
     </div>
   );
