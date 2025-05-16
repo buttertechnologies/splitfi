@@ -15,6 +15,7 @@ import { GroupForm } from "@/components/GroupForm";
 import { GroupCard } from "@/components/GroupCard";
 import { useUserGroups } from "@/hooks/useUserGroups";
 import { useCreateGroup } from "@/hooks/useCreateGroup";
+import { Users } from "lucide-react";
 
 export default function GroupsPage() {
   const [isOpen, setIsOpen] = useState(false);
@@ -68,9 +69,20 @@ export default function GroupsPage() {
         </Dialog>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {groups?.map((group, index) => (
-          <GroupCard key={index} group={group} />
-        ))}
+        {groups?.length === 0 ? (
+          <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+            <div className="rounded-full bg-gray-100 p-6 mb-4">
+              <Users className="w-12 h-12 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No groups yet</h3>
+            <p className="text-gray-500 mb-6">Create your first group to start splitting expenses with friends.</p>
+            <Button onClick={() => setIsOpen(true)}>Create Group</Button>
+          </div>
+        ) : (
+          groups?.map((group, index) => (
+            <GroupCard key={index} group={group} />
+          ))
+        )}
       </div>
     </div>
   );
