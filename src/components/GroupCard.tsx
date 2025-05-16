@@ -6,18 +6,10 @@ import Link from "next/link";
 import { GroupSummary } from "@/types/models";
 
 interface GroupCardProps {
-  id: string;
   group: GroupSummary;
 }
 
-export function GroupCard({ id, group }: GroupCardProps) {
-  // Dummy Flow addresses for now
-  const dummyMembers = [
-    "0x1234567890abcdef",
-    "0xabcdef1234567890",
-    "0x9876543210fedcba"
-  ];
-
+export function GroupCard({ group }: GroupCardProps) {
   // Dummy amount for now
   const dummyAmount = 1200.00;
   const formattedAmount = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(dummyAmount);
@@ -33,8 +25,8 @@ export function GroupCard({ id, group }: GroupCardProps) {
         <div className="text-2xl font-bold mt-1">{formattedAmount}</div>
         <div className="text-sm text-muted-foreground mb-2">You owe: {formattedYouOwe}</div>
         <div className="flex -space-x-2 mt-2">
-          {dummyMembers.map((address, index) => (
-            <Avatar key={address} className="border-2 border-background">
+          {group.members.map((member) => (
+            <Avatar key={member.address} className="border-2 border-background">
               <AvatarFallback>
                 <User className="h-4 w-4" />
               </AvatarFallback>
@@ -43,7 +35,7 @@ export function GroupCard({ id, group }: GroupCardProps) {
         </div>
       </CardHeader>
       <CardFooter>
-        <Link href={`/groups/${id}`} className="w-full">
+        <Link href={`/groups/${group.uuid}`} className="w-full">
           <Button className="w-full rounded-lg" variant="default">
             Open Group
           </Button>

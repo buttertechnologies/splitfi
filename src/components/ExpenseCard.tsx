@@ -5,12 +5,17 @@ import { User } from "lucide-react";
 
 interface ExpenseCardProps {
   description: string;
-  amount: number;
+  amount: string;
   date: Date;
   splitBetween: string[];
 }
 
-export function ExpenseCard({ description, amount, date, splitBetween }: ExpenseCardProps) {
+export function ExpenseCard({
+  description,
+  amount,
+  date,
+  splitBetween,
+}: ExpenseCardProps) {
   return (
     <div className="bg-card rounded-lg border p-4">
       <div className="flex justify-between items-start mb-3">
@@ -25,16 +30,13 @@ export function ExpenseCard({ description, amount, date, splitBetween }: Expense
           </p>
         </div>
         <div className="text-lg font-semibold">
-          ${amount.toFixed(2)}
+          ${Number(amount).toFixed(2)}
         </div>
       </div>
       <div className="flex items-center justify-between">
         <div className="flex -space-x-2">
           {splitBetween.map((address) => (
-            <Avatar
-              key={address}
-              className="border-2 border-background"
-            >
+            <Avatar key={address} className="border-2 border-background">
               <AvatarFallback>
                 <User className="h-4 w-4" />
               </AvatarFallback>
@@ -44,4 +46,4 @@ export function ExpenseCard({ description, amount, date, splitBetween }: Expense
       </div>
     </div>
   );
-} 
+}

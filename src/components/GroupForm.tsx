@@ -158,7 +158,7 @@ export function GroupForm({ onSubmit, onCancel, initialName = "", initialMembers
         </Button>
         <Button 
           type="submit"
-          disabled={!groupName || members.length === 0}
+          disabled={!groupName}
         >
           {initialName ? "Save Changes" : "Create Group"}
         </Button>

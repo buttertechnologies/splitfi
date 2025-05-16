@@ -13,14 +13,14 @@ import {
 import { useState } from "react";
 import { GroupForm } from "@/components/GroupForm";
 import { GroupCard } from "@/components/GroupCard";
-import { useGroupsSummary } from "@/hooks/useGroupsSummary";
+import { useUserGroups } from "@/hooks/useUserGroups";
 import { useCreateGroup } from "@/hooks/useCreateGroup";
 
 export default function GroupsPage() {
   const [isOpen, setIsOpen] = useState(false);
   const address = useCurrentFlowUser().user.addr;
-  const { data: groups, isLoading, error } = useGroupsSummary(address);
-  const { data: user, createGroup } = useCreateGroup()
+  const { data: groups, isLoading, error } = useUserGroups(address);
+  const { data: createGroupResult, createGroup } = useCreateGroup()
 
   const handleCreateGroup = (groupName: string, members: string[]) => {
     console.log("Creating group:", { groupName, members });
@@ -69,7 +69,7 @@ export default function GroupsPage() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {groups?.map((group, index) => (
-          <GroupCard key={index} id={String(index)} group={group} />
+          <GroupCard key={index} group={group} />
         ))}
       </div>
     </div>

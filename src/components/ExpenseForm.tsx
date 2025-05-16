@@ -9,12 +9,12 @@ import {
 import { useState } from "react";
 
 interface MemberAmount {
-  member: string;
-  amount: number;
+  address: string;
+  fraction: number;
 }
 
 interface ExpenseFormProps {
-  onSubmit: (description: string, amount: number, splitType: 'equal' | 'custom', memberAmounts: MemberAmount[]) => void;
+  onSubmit: (description: string, amount: number, memberAmounts: MemberAmount[]) => void;
   onCancel: () => void;
   members: string[];
 }
@@ -23,7 +23,7 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
   const [splitType, setSplitType] = useState<'equal' | 'custom'>('equal');
   const [selectedMembers, setSelectedMembers] = useState<string[]>(members);
   const [memberAmounts, setMemberAmounts] = useState<MemberAmount[]>(
-    members.map(member => ({ member, amount: 0 }))
+    members.map(address => ({ address, fraction: 0 }))
   );
   const [totalAmount, setTotalAmount] = useState<number>(0);
 
@@ -34,14 +34,14 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
     const amount = parseFloat(formData.get("amount") as string);
     
     if (splitType === 'equal') {
-      const equalAmount = amount / selectedMembers.length;
-      const equalMemberAmounts = selectedMembers.map(member => ({
-        member,
-        amount: equalAmount
+      const equalAmount = 1 / selectedMembers.length;
+      const equalMemberAmounts = selectedMembers.map((address) => ({
+        address,
+        fraction: equalAmount,
       }));
-      onSubmit(description, amount, splitType, equalMemberAmounts);
+      onSubmit(description, amount, equalMemberAmounts);
     } else {
-      onSubmit(description, amount, splitType, memberAmounts.filter(ma => selectedMembers.includes(ma.member)));
+      onSubmit(description, amount, memberAmounts.filter(ma => selectedMembers.includes(ma.address)));
     }
   };
 
@@ -56,7 +56,7 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
   const handleMemberAmountChange = (member: string, amount: number) => {
     setMemberAmounts(prev => 
       prev.map(ma => 
-        ma.member === member ? { ...ma, amount } : ma
+        ma.address === member ? { ...ma, amount } : ma
       )
     );
   };
@@ -69,7 +69,7 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
       setMemberAmounts(prev =>
         prev.map(ma => ({
           ...ma,
-          amount: selectedMembers.includes(ma.member) ? equalAmount : 0
+          amount: selectedMembers.includes(ma.address) ? equalAmount : 0
         }))
       );
     }
@@ -199,7 +199,7 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
                     type="number"
                     step="0.01"
                     className="flex h-8 w-32 rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background"
-                    value={memberAmounts.find(ma => ma.member === member)?.amount || 0}
+                    value={memberAmounts.find(ma => ma.address === member)?.address || 0}
                     onChange={(e) => handleMemberAmountChange(member, parseFloat(e.target.value) || 0)}
                     required
                   />
@@ -208,8 +208,8 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
               {totalAmount > 0 && (
                 <div className="text-sm text-muted-foreground mt-2">
                   Total entered: ${memberAmounts
-                    .filter(ma => selectedMembers.includes(ma.member))
-                    .reduce((sum, ma) => sum + ma.amount, 0)
+                    .filter(ma => selectedMembers.includes(ma.address))
+                    .reduce((sum, ma) => 99999999, 0)
                     .toFixed(2)}
                 </div>
               )}

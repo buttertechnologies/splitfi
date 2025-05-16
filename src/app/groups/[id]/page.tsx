@@ -18,42 +18,12 @@ import { ExpenseCard } from "@/components/ExpenseCard";
 import { PaymentCard } from "@/components/PaymentCard";
 import { MembersList } from "@/components/MembersList";
 import { TransactionDialog } from "@/components/TransactionDialog";
-
-const dummyGroup = {
-  name: "Weekend Trip to Vegas",
-  members: ["0x1234567890abcdef", "0xabcdef1234567890", "0x9876543210fedcba"],
-};
-
-const dummyExpenses = [
-  {
-    id: 1,
-    description: "Hotel Room",
-    amount: 450.0,
-    date: new Date("2024-03-15T14:30:00"),
-    splitBetween: ["0x1234567890abcdef", "0xabcdef1234567890"],
-  },
-  {
-    id: 2,
-    description: "Dinner at Restaurant",
-    amount: 180.5,
-    date: new Date("2024-03-15T20:00:00"),
-    splitBetween: [
-      "0x1234567890abcdef",
-      "0xabcdef1234567890",
-      "0x9876543210fedcba",
-    ],
-  },
-  {
-    id: 3,
-    description: "Show Tickets",
-    amount: 300.0,
-    date: new Date("2024-03-16T19:00:00"),
-    splitBetween: ["0x1234567890abcdef", "0x9876543210fedcba"],
-  },
-];
+import { useGroup } from "@/hooks/useGroup";
+import { useAddExpense } from "@/hooks/useAddExpense";
 
 const dummyPayments = [
   {
+    type: "payment",
     id: 1,
     from: "0xabcdef1234567890",
     to: ["0x1234567890abcdef", "0x9876543210fedcba"],
@@ -61,6 +31,7 @@ const dummyPayments = [
     date: new Date("2024-03-16T10:00:00"),
   },
   {
+    type: "payment",
     id: 2,
     from: "0x9876543210fedcba",
     to: ["0x1234567890abcdef"],
@@ -70,15 +41,18 @@ const dummyPayments = [
 ];
 
 export default function GroupDetailPage() {
-  const params = useParams();
+  const params = useParams<{ id: string }>();
   const { id } = params;
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [selectedMembersTitle, setSelectedMembersTitle] = useState("");
-  const [selectedMembersDescription, setSelectedMembersDescription] = useState("");
+  const [selectedMembersDescription, setSelectedMembersDescription] =
+    useState("");
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
+  const { data: group } = useGroup(id);
+  const { addExpense } = useAddExpense();
 
   const handleEditGroup = (groupName: string, members: string[]) => {
     console.log("Editing group:", { groupName, members });
@@ -88,13 +62,77 @@ export default function GroupDetailPage() {
   const handleAddExpense = (
     description: string,
     amount: number,
-    splitType: 'equal' | 'custom',
-    memberAmounts: { member: string; amount: number }[]
+    memberPercentages: { address: string; fraction: number }[]
   ) => {
-    console.log("Adding expense:", { description, amount, splitType, memberAmounts });
+    addExpense({
+      groupId: id,
+      amount,
+      description,
+      timestamp: new Date(),
+      debtors: memberPercentages.map(({ address, fraction }) => ({
+        address: address,
+        fraction: fraction,
+      })),
+    });
     setIsAddExpenseDialogOpen(false);
     setIsTransactionDialogOpen(true);
   };
+
+  const expenseFeedItems =
+    group?.members.flatMap((member) =>
+      member.expenses.map((expense) => {
+        const date = new Date(Number(expense.timestamp) * 1000);
+        return {
+          date,
+          content: (
+            <div
+              key={`expense-${expense.timestamp}`}
+              onClick={() => {
+                setSelectedMembers(Object.keys(expense.debtors));
+                setSelectedMembersTitle(`Members for ${expense.description}`);
+                setSelectedMembersDescription("Members who split this expense");
+                setIsMembersDialogOpen(true);
+              }}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              <ExpenseCard
+                description={expense.description}
+                amount={expense.amount}
+                date={date}
+                splitBetween={Object.keys(expense.debtors)}
+              />
+            </div>
+          ),
+        };
+      })
+    ) || [];
+
+  const paymentFeedItems =
+    dummyPayments.map((payment) => {
+      const date = new Date(payment.date.getTime());
+      return {
+        date,
+        content: (
+          <div
+            key={`payment-${payment.id}`}
+            onClick={() => {
+              setSelectedMembers([payment.from, ...payment.to]);
+              setSelectedMembersTitle("Payment Members");
+              setSelectedMembersDescription("Members involved in this payment");
+              setIsMembersDialogOpen(true);
+            }}
+            className="cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <PaymentCard
+              from={payment.from}
+              to={payment.to}
+              amounts={payment.amounts}
+              date={payment.date}
+            />
+          </div>
+        ),
+      };
+    }) || [];
 
   return (
     <div className="container mx-auto p-8">
@@ -106,7 +144,7 @@ export default function GroupDetailPage() {
         </Link>
       </div>
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4 sm:gap-0">
-        <h1 className="text-3xl font-bold">{dummyGroup.name}</h1>
+        <h1 className="text-3xl font-bold">{group?.name}</h1>
         <div className="flex gap-2">
           <Button onClick={() => setIsAddExpenseDialogOpen(true)}>
             Add Expense
@@ -126,9 +164,13 @@ export default function GroupDetailPage() {
               <GroupForm
                 onSubmit={handleEditGroup}
                 onCancel={() => setIsEditDialogOpen(false)}
-                initialName={dummyGroup.name}
-                initialMembers={dummyGroup.members}
-                groupId={typeof id === 'string' ? id : Array.isArray(id) ? id[0] : ''}
+                initialName={group?.name}
+                initialMembers={
+                  group?.members?.map((member) => member.address) || []
+                }
+                groupId={
+                  typeof id === "string" ? id : Array.isArray(id) ? id[0] : ""
+                }
               />
             </DialogContent>
           </Dialog>
@@ -149,7 +191,7 @@ export default function GroupDetailPage() {
             <ExpenseForm
               onSubmit={handleAddExpense}
               onCancel={() => setIsAddExpenseDialogOpen(false)}
-              members={dummyGroup.members}
+              members={group?.members?.map((member) => member.address) || []}
             />
           </DialogContent>
         </Dialog>
@@ -157,22 +199,26 @@ export default function GroupDetailPage() {
       <hr className="my-4 border-t border-gray-200" />
       <div className="mt-4">
         <h2 className="text-xl font-semibold mb-2">Group Members</h2>
-        <div 
+        <div
           className="flex -space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
           onClick={() => {
-            setSelectedMembers(dummyGroup.members);
+            setSelectedMembers(
+              group?.members?.map((member) => member.address) || []
+            );
             setSelectedMembersTitle("Group Members");
             setSelectedMembersDescription("List of all members in this group");
             setIsMembersDialogOpen(true);
           }}
         >
-          {dummyGroup.members.map((address) => (
-            <Avatar key={address} className="border-2 border-background">
-              <AvatarFallback>
-                <User className="h-4 w-4" />
-              </AvatarFallback>
-            </Avatar>
-          ))}
+          {(group?.members?.map((member) => member.address) || []).map(
+            (address) => (
+              <Avatar key={address} className="border-2 border-background">
+                <AvatarFallback>
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+            )
+          )}
         </div>
       </div>
 
@@ -187,51 +233,9 @@ export default function GroupDetailPage() {
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Activity</h2>
         <div className="grid gap-4">
-          {[...dummyExpenses, ...dummyPayments]
+          {[...expenseFeedItems, ...paymentFeedItems]
             .sort((a, b) => b.date.getTime() - a.date.getTime())
-            .map((item) => {
-              if ('description' in item) {
-                return (
-                  <div
-                    key={`expense-${item.id}`}
-                    onClick={() => {
-                      setSelectedMembers(item.splitBetween);
-                      setSelectedMembersTitle(`Members for ${item.description}`);
-                      setSelectedMembersDescription("Members who split this expense");
-                      setIsMembersDialogOpen(true);
-                    }}
-                    className="cursor-pointer hover:opacity-80 transition-opacity"
-                  >
-                    <ExpenseCard
-                      description={item.description}
-                      amount={item.amount}
-                      date={item.date}
-                      splitBetween={item.splitBetween}
-                    />
-                  </div>
-                );
-              } else {
-                return (
-                  <div
-                    key={`payment-${item.id}`}
-                    onClick={() => {
-                      setSelectedMembers([item.from, ...item.to]);
-                      setSelectedMembersTitle("Payment Members");
-                      setSelectedMembersDescription("Members involved in this payment");
-                      setIsMembersDialogOpen(true);
-                    }}
-                    className="cursor-pointer hover:opacity-80 transition-opacity"
-                  >
-                    <PaymentCard
-                      from={item.from}
-                      to={item.to}
-                      amounts={item.amounts}
-                      date={item.date}
-                    />
-                  </div>
-                );
-              }
-            })}
+            .map((item) => item.content)}
         </div>
       </div>
 
