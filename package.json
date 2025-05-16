@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NEXT_PUBLIC_FLOW_NETWORK=emulator concurrently \"next dev\" \"flow emulator\" \"sleep 2 && flow project deploy --network emulator\" \"flow dev-wallet\"",
+    "dev": "NEXT_PUBLIC_FLOW_NETWORK=emulator concurrently \"next dev\" \"flow emulator\" \"sleep 2 && flow project deploy --network emulator && ./scripts/post-deploy.sh\" \"flow dev-wallet\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

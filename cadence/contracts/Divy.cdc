@@ -1,5 +1,7 @@
 import "Crypto"
-
+import "EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed"
+import "FungibleTokenMetadataViews"
+import "FungibleToken"
 access(all)
 contract Divy {
     access(all) let groups: {UInt64: Bool}
@@ -142,6 +144,46 @@ contract Divy {
             self.anonymousInvitations <- {}
         }
 
+        access(all) fun totalExpenses(): UFix64 {
+            var total: UFix64 = 0.0
+            for member in self.members.values {
+                let memberRef = member.borrow()
+                    ?? panic("Member not found for address ".concat(member.collectionCapability.address.toString()))
+                for expense in memberRef.expenses {
+                    total = total + expense.amount
+                }
+            }
+            return total
+        }
+
+        /**
+         * Get the current balance owed to the group by a member (or negative if they are owed money).
+         */
+        access(all) fun getMemberBalance(address: Address): UFix64 {
+            let member = self.members[address]!.borrow()
+                ?? panic("Member not found for address ".concat(address.toString()))
+            return member.getTotalPaid() - self.getPrincipalOwing(address: address)
+        }
+
+        /**
+         * Get the total amount owed by a member before any payments are made.
+         */
+        access(all) fun getPrincipalOwing(address: Address): UFix64 {
+            let member = self.members[address]!.borrow()
+                ?? panic("Member not found for address ".concat(address.toString()))
+            
+            var totalOwing = 0.0
+            for expense in member.expenses {
+                for debtor in expense.debtors.keys {
+                    if debtor == address {
+                        totalOwing = expense.amount
+                    }
+                }
+            }
+
+            return totalOwing
+        }
+
         access(Admin | Invitee) fun createMembership(): @Membership {
             let adminCap = Divy.issueMemberCapability(groupId: self.uuid)
             return <- create Membership(
@@ -257,6 +299,7 @@ contract Divy {
         }
     }
 
+
     /**
      * The `MemberExpense` resource is used to represent incurred by a member of a group.
      */
@@ -297,6 +340,22 @@ contract Divy {
     }
 
     /**
+     * The `Payment` resource is used to represent a payment made by a member of a group.
+     */
+    access(all) struct PaymentInfo {
+        access(all) let timestamp: UFix64
+        access(all) let recipients: {Address: UFix64}
+
+        init(
+            timestamp: UFix64,
+            recipients: {Address: UFix64}
+        ) {
+            self.timestamp = timestamp
+            self.recipients = recipients
+        }
+    }
+
+    /**
      * The `Membership` resource is used to represent a membership in a group.
      * It contains a reference to the group and a UUID for the membership.
      */
@@ -305,12 +364,17 @@ contract Divy {
         access(all) let groupId: UInt64
         // Expenses incurred by the member, indexed by the expense UUID.
         access(all) let expenses: [MemberExpense]
+        // The payments made by the member.
+        access(all) let payments: [PaymentInfo]
+        // The capability to the group.
         access(self) let memberCapability: Capability<auth(Member) &Group>
+        // The capability to the group admin.
         access(self) var adminCapability: Capability<auth(Admin) &Group>?
         
         init(memberCapability: Capability<auth(Member) &Group>) {
             self.groupId = memberCapability.borrow()!.uuid
             self.expenses = []
+            self.payments = []
             self.memberCapability = memberCapability
             self.adminCapability = nil
         }
@@ -320,6 +384,91 @@ contract Divy {
          */
         access(Owner) fun addExpense(expense: MemberExpense) {
             self.expenses.append(expense)
+        }
+
+        /**
+         * Add a payment to the group.  Withdraws the maximum amount from the vault and distributes it to all members.
+         */
+        // TODO: panic could prevent repayment
+        // We need a holder vault for any that can't be distributed
+        access(all) fun makePayment(
+            vaultRef: auth(FungibleToken.Withdraw) &EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.Vault,
+            address: Address
+        ) {
+            let group = self.borrowGroup()
+
+            // Get the vault data for the token
+            let vaultData = EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.resolveContractView(
+                resourceType: nil,
+                viewType: Type<FungibleTokenMetadataViews.FTVaultData>(),
+            )! as! FungibleTokenMetadataViews.FTVaultData
+
+            let recipients: {Address: UFix64} = {}
+
+            // Distribute payment to all members
+            // TODO: make fair
+            for peerAddress in group.members.keys {
+                if vaultRef.balance <= 0.0 {
+                    break
+                }
+
+                if peerAddress == address {
+                    continue
+                }
+
+                let balance = group.getMemberBalance(address: peerAddress)
+                if balance <= 0.0 {
+                    continue
+                }
+
+                let paymentAmount = balance > vaultRef.balance ? vaultRef.balance : balance
+
+                let peerMember = group.members[peerAddress]?.borrow()
+                    ?? panic("Member not found for address ".concat(peerAddress.toString()))
+                let payment <- vaultRef.withdraw(amount: paymentAmount)
+                
+                let receiver = getAccount(peerAddress)
+                    .capabilities
+                    .borrow<&EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.Vault>(vaultData.receiverPath)
+                if receiver == nil {
+                    // TODO: send to holding vault
+                    panic("Receiver not found for address ".concat(peerAddress.toString()))
+                }
+
+                // Transfer the payment to the receiver
+                receiver!.deposit(from: <-payment)
+
+                // Update the payment info
+                recipients[peerAddress] = paymentAmount
+            }
+
+            // Create a payment info object
+            let paymentInfo = PaymentInfo(
+                timestamp: getCurrentBlock().timestamp,
+                recipients: recipients
+            )
+
+            // Add the payment info to the member's payments
+            self.payments.append(paymentInfo)
+        }
+
+        /**
+         * Get the total payments by the member including expenses paid for others and payments made.
+         */
+        access(all) fun getTotalPaid(): UFix64 {
+            var total: UFix64 = 0.0
+            for payment in self.payments {
+                for recipient in (&payment.recipients as &{Address: UFix64}).keys {
+                    total = total + (&payment.recipients as &{Address: UFix64})[recipient]!
+                }
+            }
+
+            for expense in (&self.expenses as &[MemberExpense]) {
+                for debtor in expense.debtors.keys {
+                    total = total + (expense.debtors[debtor]! * expense.amount)
+                }
+            }
+            return total
         }
 
         /**
