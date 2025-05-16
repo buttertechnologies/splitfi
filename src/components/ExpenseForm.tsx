@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { Dice6, Users, SlidersHorizontal } from "lucide-react";
 
 interface MemberAmount {
   member: string;
@@ -14,13 +15,13 @@ interface MemberAmount {
 }
 
 interface ExpenseFormProps {
-  onSubmit: (description: string, amount: number, splitType: 'equal' | 'custom', memberAmounts: MemberAmount[]) => void;
+  onSubmit: (description: string, amount: number, splitType: 'equal' | 'custom' | 'random', memberAmounts: MemberAmount[]) => void;
   onCancel: () => void;
   members: string[];
 }
 
 export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
-  const [splitType, setSplitType] = useState<'equal' | 'custom'>('equal');
+  const [splitType, setSplitType] = useState<'equal' | 'custom' | 'random'>('equal');
   const [selectedMembers, setSelectedMembers] = useState<string[]>(members);
   const [memberAmounts, setMemberAmounts] = useState<MemberAmount[]>(
     members.map(member => ({ member, amount: 0 }))
@@ -75,7 +76,7 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
     }
   };
 
-  const handleSplitTypeChange = (value: 'equal' | 'custom') => {
+  const handleSplitTypeChange = (value: 'equal' | 'custom' | 'random') => {
     setSplitType(value);
     if (value === 'equal') {
       // When switching to equal split, select all members by default
@@ -139,8 +140,18 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
             <SelectValue placeholder="Select split type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="equal">Split equally among everyone</SelectItem>
-            <SelectItem value="custom">Split with custom amounts</SelectItem>
+            <SelectItem value="equal" className="flex items-center gap-2">
+              <span className="flex items-center"><Users className="h-6 w-6 mr-2" /></span>
+              Split equally among everyone
+            </SelectItem>
+            <SelectItem value="custom" className="flex items-center gap-2">
+              <span className="flex items-center"><SlidersHorizontal className="h-6 w-6 mr-2" /></span>
+              Split with custom amounts
+            </SelectItem>
+            <SelectItem value="random" className="flex items-center gap-2">
+              <span className="flex items-center"><Dice6 className="h-6 w-6 mr-2" /></span>
+              Pay Spin - Random on-chain selection
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -171,6 +182,18 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
               Each person will pay: ${(totalAmount / selectedMembers.length).toFixed(2)}
             </div>
           )}
+        </div>
+      ) : splitType === 'random' ? (
+        <div className="grid gap-2">
+          <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+            <Dice6 className="h-8 w-8 text-primary" />
+            <div className="space-y-1">
+              <p className="text-base font-semibold">Pay Spin</p>
+              <p className="text-sm text-muted-foreground">
+                Using Flow's on-chain randomness to fairly select who pays. The person who gets picked will pay for this expense!
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="grid gap-2">
