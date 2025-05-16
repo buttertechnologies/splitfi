@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { Dice6, Users, SlidersHorizontal } from "lucide-react";
 
 interface MemberAmount {
   member: string;
@@ -139,9 +140,18 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
             <SelectValue placeholder="Select split type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="equal">Split equally among everyone</SelectItem>
-            <SelectItem value="custom">Split with custom amounts</SelectItem>
-            <SelectItem value="random">Pick someone at random to pay</SelectItem>
+            <SelectItem value="equal" className="flex items-center gap-2">
+              <span className="flex items-center"><Users className="h-6 w-6 mr-2" /></span>
+              Split equally among everyone
+            </SelectItem>
+            <SelectItem value="custom" className="flex items-center gap-2">
+              <span className="flex items-center"><SlidersHorizontal className="h-6 w-6 mr-2" /></span>
+              Split with custom amounts
+            </SelectItem>
+            <SelectItem value="random" className="flex items-center gap-2">
+              <span className="flex items-center"><Dice6 className="h-6 w-6 mr-2" /></span>
+              Pay Spin - Random on-chain selection
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -175,8 +185,14 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
         </div>
       ) : splitType === 'random' ? (
         <div className="grid gap-2">
-          <div className="text-sm text-muted-foreground">
-            The payer will be randomly selected when the expense is added.
+          <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+            <Dice6 className="h-8 w-8 text-primary" />
+            <div className="space-y-1">
+              <p className="text-base font-semibold">Pay Spin</p>
+              <p className="text-sm text-muted-foreground">
+                Using Flow's on-chain randomness to fairly select who pays. The person who gets picked will pay for this expense!
+              </p>
+            </div>
           </div>
         </div>
       ) : (
