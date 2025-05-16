@@ -15,16 +15,23 @@ interface MemberAmount {
 }
 
 interface ExpenseFormProps {
-  onSubmit: (description: string, amount: number, splitType: 'equal' | 'custom' | 'random', memberAmounts: MemberAmount[]) => void;
+  onSubmit: (
+    description: string,
+    amount: number,
+    splitType: "equal" | "custom" | "random",
+    memberAmounts: MemberAmount[]
+  ) => void;
   onCancel: () => void;
   members: string[];
 }
 
 export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
-  const [splitType, setSplitType] = useState<'equal' | 'custom' | 'random'>('equal');
+  const [splitType, setSplitType] = useState<"equal" | "custom" | "random">(
+    "equal"
+  );
   const [selectedMembers, setSelectedMembers] = useState<string[]>(members);
   const [memberAmounts, setMemberAmounts] = useState<MemberAmount[]>(
-    members.map(member => ({ member, amount: 0 }))
+    members.map((member) => ({ member, amount: 0 }))
   );
   const [totalAmount, setTotalAmount] = useState<number>(0);
 
@@ -33,69 +40,72 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
     const formData = new FormData(e.target as HTMLFormElement);
     const description = formData.get("description") as string;
     const amount = parseFloat(formData.get("amount") as string);
-    
-    if (splitType === 'equal') {
+
+    if (splitType === "equal") {
       const equalAmount = amount / selectedMembers.length;
-      const equalMemberAmounts = selectedMembers.map(member => ({
+      const equalMemberAmounts = selectedMembers.map((member) => ({
         member,
-        amount: equalAmount
+        amount: equalAmount,
       }));
       onSubmit(description, amount, splitType, equalMemberAmounts);
     } else {
-      onSubmit(description, amount, splitType, memberAmounts.filter(ma => selectedMembers.includes(ma.member)));
+      onSubmit(
+        description,
+        amount,
+        splitType,
+        memberAmounts.filter((ma) => selectedMembers.includes(ma.member))
+      );
     }
   };
 
   const handleMemberSelect = (member: string) => {
-    setSelectedMembers(prev => 
-      prev.includes(member) 
-        ? prev.filter(m => m !== member)
+    setSelectedMembers((prev) =>
+      prev.includes(member)
+        ? prev.filter((m) => m !== member)
         : [...prev, member]
     );
   };
 
   const handleMemberAmountChange = (member: string, amount: number) => {
-    setMemberAmounts(prev => 
-      prev.map(ma => 
-        ma.member === member ? { ...ma, amount } : ma
-      )
+    setMemberAmounts((prev) =>
+      prev.map((ma) => (ma.member === member ? { ...ma, amount } : ma))
     );
   };
 
   const handleTotalAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const amount = parseFloat(e.target.value) || 0;
     setTotalAmount(amount);
-    if (splitType === 'equal' && selectedMembers.length > 0) {
+    if (splitType === "equal" && selectedMembers.length > 0) {
       const equalAmount = amount / selectedMembers.length;
-      setMemberAmounts(prev =>
-        prev.map(ma => ({
+      setMemberAmounts((prev) =>
+        prev.map((ma) => ({
           ...ma,
-          amount: selectedMembers.includes(ma.member) ? equalAmount : 0
+          amount: selectedMembers.includes(ma.member) ? equalAmount : 0,
         }))
       );
     }
   };
 
-  const handleSplitTypeChange = (value: 'equal' | 'custom' | 'random') => {
+  const handleSplitTypeChange = (value: "equal" | "custom" | "random") => {
     setSplitType(value);
-    if (value === 'equal') {
+    if (value === "equal") {
       // When switching to equal split, select all members by default
       setSelectedMembers(members);
       if (totalAmount > 0) {
         const equalAmount = totalAmount / members.length;
-        setMemberAmounts(prev =>
-          prev.map(ma => ({
+        setMemberAmounts((prev) =>
+          prev.map((ma) => ({
             ...ma,
-            amount: equalAmount
+            amount: equalAmount,
           }))
         );
       }
     } else {
       // When switching to custom split, keep current selections but reset amounts
-      setMemberAmounts(prev =>
-        prev.map(ma => ({
+      setMemberAmounts((prev) =>
+        prev.map((ma) => ({
           ...ma,
-          amount: 0
+          amount: 0,
         }))
       );
     }
@@ -131,32 +141,37 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
         />
       </div>
       <div className="grid gap-2">
-        <label className="text-sm font-medium">How would you like to split this expense?</label>
-        <Select
-          value={splitType}
-          onValueChange={handleSplitTypeChange}
-        >
+        <label className="text-sm font-medium">
+          How would you like to split this expense?
+        </label>
+        <Select value={splitType} onValueChange={handleSplitTypeChange}>
           <SelectTrigger>
             <SelectValue placeholder="Select split type" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="equal" className="flex items-center gap-2">
-              <span className="flex items-center"><Users className="h-6 w-6 mr-2" /></span>
+              <span className="flex items-center">
+                <Users className="h-6 w-6 mr-2" />
+              </span>
               Split equally among everyone
             </SelectItem>
             <SelectItem value="custom" className="flex items-center gap-2">
-              <span className="flex items-center"><SlidersHorizontal className="h-6 w-6 mr-2" /></span>
+              <span className="flex items-center">
+                <SlidersHorizontal className="h-6 w-6 mr-2" />
+              </span>
               Split with custom amounts
             </SelectItem>
             <SelectItem value="random" className="flex items-center gap-2">
-              <span className="flex items-center"><Dice6 className="h-6 w-6 mr-2" /></span>
+              <span className="flex items-center">
+                <Dice6 className="h-6 w-6 mr-2" />
+              </span>
               Pay Spin - Random on-chain selection
             </SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {splitType === 'equal' ? (
+      {splitType === "equal" ? (
         <div className="grid gap-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium">Split equally among:</label>
@@ -169,7 +184,9 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
               <Button
                 key={member}
                 type="button"
-                variant={selectedMembers.includes(member) ? "default" : "outline"}
+                variant={
+                  selectedMembers.includes(member) ? "default" : "outline"
+                }
                 onClick={() => handleMemberSelect(member)}
                 className="text-xs"
               >
@@ -179,31 +196,37 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
           </div>
           {totalAmount > 0 && selectedMembers.length > 0 && (
             <div className="text-sm text-muted-foreground mt-2">
-              Each person will pay: ${(totalAmount / selectedMembers.length).toFixed(2)}
+              Each person will pay: $
+              {(totalAmount / selectedMembers.length).toFixed(2)}
             </div>
           )}
         </div>
-      ) : splitType === 'random' ? (
+      ) : splitType === "random" ? (
         <div className="grid gap-2">
           <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
             <Dice6 className="h-8 w-8 text-primary" />
             <div className="space-y-1">
               <p className="text-base font-semibold">Pay Spin</p>
               <p className="text-sm text-muted-foreground">
-                Using Flow's on-chain randomness to fairly select who pays. The person who gets picked will pay for this expense!
+                Using Flow's on-chain randomness to fairly select who pays. The
+                person who gets picked will pay for this expense!
               </p>
             </div>
           </div>
         </div>
       ) : (
         <div className="grid gap-2">
-          <label className="text-sm font-medium">Select members and enter their amounts:</label>
+          <label className="text-sm font-medium">
+            Select members and enter their amounts:
+          </label>
           <div className="flex flex-wrap gap-2 mb-2">
             {members.map((member) => (
               <Button
                 key={member}
                 type="button"
-                variant={selectedMembers.includes(member) ? "default" : "outline"}
+                variant={
+                  selectedMembers.includes(member) ? "default" : "outline"
+                }
                 onClick={() => handleMemberSelect(member)}
                 className="text-xs"
               >
@@ -222,17 +245,26 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
                     type="number"
                     step="0.01"
                     className="flex h-8 w-32 rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background"
-                    value={memberAmounts.find(ma => ma.member === member)?.amount || 0}
-                    onChange={(e) => handleMemberAmountChange(member, parseFloat(e.target.value) || 0)}
+                    value={
+                      memberAmounts.find((ma) => ma.member === member)
+                        ?.member || 0
+                    }
+                    onChange={(e) =>
+                      handleMemberAmountChange(
+                        member,
+                        parseFloat(e.target.value) || 0
+                      )
+                    }
                     required
                   />
                 </div>
               ))}
               {totalAmount > 0 && (
                 <div className="text-sm text-muted-foreground mt-2">
-                  Total entered: ${memberAmounts
-                    .filter(ma => selectedMembers.includes(ma.member))
-                    .reduce((sum, ma) => sum + ma.amount, 0)
+                  Total entered: $
+                  {memberAmounts
+                    .filter((ma) => selectedMembers.includes(ma.member))
+                    .reduce((sum, ma) => 99999999, 0)
                     .toFixed(2)}
                 </div>
               )}
@@ -249,4 +281,4 @@ export function ExpenseForm({ onSubmit, onCancel, members }: ExpenseFormProps) {
       </div>
     </form>
   );
-} 
+}

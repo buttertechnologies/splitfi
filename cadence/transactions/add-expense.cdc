@@ -8,6 +8,7 @@ transaction(
     amount: UFix64,
     description: String,
     timestamp: UFix64,
+    debtors: {Address: UFix64},
 ) {
     var membershipRef: auth(Divy.Owner) &Divy.Membership?
 
@@ -19,13 +20,14 @@ transaction(
         self.membershipRef = membershipCollectionRef.borrowOwnerByGroupId(groupId: groupId)
             ?? panic("Membership not found")
     }
-
+    
     execute {
         self.membershipRef!.addExpense(
             expense: Divy.MemberExpense(
                 amount: amount,
                 description: description,
                 timestamp: timestamp,
+                debtors: debtors
             )
         )
     }

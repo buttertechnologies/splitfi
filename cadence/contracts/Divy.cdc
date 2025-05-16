@@ -1,4 +1,5 @@
 import "Crypto"
+
 access(all)
 contract Divy {
     access(all) let groups: {UInt64: Bool}
@@ -141,7 +142,7 @@ contract Divy {
             self.anonymousInvitations <- {}
         }
 
-        access(Invitee) fun createMembership(): @Membership {
+        access(Admin | Invitee) fun createMembership(): @Membership {
             let adminCap = Divy.issueMemberCapability(groupId: self.uuid)
             return <- create Membership(
                 memberCapability: adminCap
@@ -179,7 +180,7 @@ contract Divy {
             self.anonymousInvitations[key] <-! anonymousInvitation
         }
 
-        access(Member) fun hydrateMember(_ address: Address, uuid: UInt64?) {
+        access(Member) fun hydrateMember(address: Address, uuid: UInt64?) {
             // ---------- 1. Resolve the capability on the target account ----------
             let collectionCap = getAccount(address)
                 .capabilities
@@ -208,7 +209,7 @@ contract Divy {
                 ?? panic("Unable to borrow MembershipCollection for ".concat(address.toString()))
 
             // If the NFT is gone (transferred / burned), discard the cached entry.
-            if !collection.groupIdToUuid.containsKey(targetUuid!) {
+            if !collection.memberships.containsKey(targetUuid!) {
                 self.members.remove(key: address)
                 return
             }
@@ -260,14 +261,38 @@ contract Divy {
      * The `MemberExpense` resource is used to represent incurred by a member of a group.
      */
     access(all) struct MemberExpense {
-        access(all) let amount: UFix64
-        access(all) let description: String
-        access(all) let timestamp: UFix64
+        // The amount of the expense in USD
+        access(all) var amount: UFix64
+        // Description of the expense
+        access(all) var description: String
+        // Timestamp of when expense was incurred in seconds since the epoch (UTC)
+        access(all) var timestamp: UFix64
+        // Map of debtors to the fraction of the expense they owe
+        access(all) var debtors: {Address: UFix64}
 
-        init(amount: UFix64, description: String, timestamp: UFix64) {
+        init(amount: UFix64, description: String, timestamp: UFix64, debtors: {Address: UFix64}) {
             self.amount = amount
             self.timestamp = timestamp
             self.description = description
+            self.debtors = {}
+        }
+
+        // TODO: IS THIS SAFE IF SOMEONE CAN GET A REFERNCE?
+
+        access(all) fun setDebtors(debtors: {Address: UFix64}) {
+            self.debtors = debtors
+        }
+
+        access(all) fun setAmount(amount: UFix64) {
+            self.amount = amount
+        }
+
+        access(all) fun setDescription(description: String) {
+            self.description = description
+        }
+
+        access(all) fun setTimestamp(timestamp: UFix64) {
+            self.timestamp = timestamp
         }
     }
 
@@ -307,10 +332,10 @@ contract Divy {
         /**
          * Join the group.
          */
-        access(Owner) fun hydrate() {
+        access(all) fun hydrate() {
             let owner = self.owner!.address
-            let memberCap = self.memberCapability.borrow()!
-            memberCap.hydrateMember(owner, uuid: self.uuid)
+            let memberCap: auth(Divy.Member) &Divy.Group = self.memberCapability.borrow()!
+            memberCap.hydrateMember(address: owner, uuid: self.uuid)
         }
 
         /**
@@ -356,11 +381,15 @@ contract Divy {
         access(all) let groupIdToUuid: {UInt64: UInt64}
         access(all) let memberships: @{UInt64: Membership}
 
-        access(contract) fun addMembership(membership: @Membership) {
+        // TODO: This should be stripped down
+        access(all) fun addMembership(membership: @Membership) {
             let uuid = membership.uuid
             let groupId = membership.groupId
+
             self.memberships[uuid] <-! membership
             self.groupIdToUuid[groupId] = uuid
+
+            (&self.memberships[uuid] as auth(Owner) &Membership?)!.hydrate()
         }
 
         access(all) fun borrow(uuid: UInt64): &Membership {

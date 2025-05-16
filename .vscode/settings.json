@@ -1,3 +1,4 @@
 {
-    "cadence.accessCheckMode": "none"
+    "cadence.accessCheckMode": "none",
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
 }

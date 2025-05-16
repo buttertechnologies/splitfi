@@ -13,7 +13,15 @@ import {
 import { GroupForm } from "@/components/GroupForm";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, CreditCard, Wallet, Receipt, Loader2, Dice6, PartyPopper } from "lucide-react";
+import {
+  User,
+  CreditCard,
+  Wallet,
+  Receipt,
+  Loader2,
+  Dice6,
+  PartyPopper,
+} from "lucide-react";
 import { ExpenseCard } from "@/components/ExpenseCard";
 import { PaymentCard } from "@/components/PaymentCard";
 import { TransactionDialog } from "@/components/TransactionDialog";
@@ -27,6 +35,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useGroup } from "@/hooks/useGroup";
+import { useAddExpense } from "@/hooks/useAddExpense";
 
 interface Member {
   address: string;
@@ -76,45 +86,52 @@ const dummyExpenses = [
 
 const dummyPayments = [
   {
+    type: "payment",
     id: 1,
     from: "0xabcdef1234567890",
     to: ["0x1234567890abcdef", "0x9876543210fedcba"],
     amounts: [150.0, 75.0],
     date: new Date("2024-03-16T10:00:00"),
-    transactionId: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    transactionId:
+      "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
   },
   {
+    type: "payment",
     id: 2,
     from: "0x9876543210fedcba",
     to: ["0x1234567890abcdef"],
     amounts: [150.0],
     date: new Date("2024-03-16T11:30:00"),
-    transactionId: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+    transactionId:
+      "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
   },
 ];
 
 export default function GroupDetailPage() {
-  const params = useParams();
+  const params = useParams<{ id: string }>();
   const { id } = params;
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
-  const [isPaymentAmountDialogOpen, setIsPaymentAmountDialogOpen] = useState(false);
+  const [isPaymentAmountDialogOpen, setIsPaymentAmountDialogOpen] =
+    useState(false);
   const [isMembersListOpen, setIsMembersListOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [isRandomPayerDialogOpen, setIsRandomPayerDialogOpen] = useState(false);
   const [showRevealButton, setShowRevealButton] = useState(false);
   const [randomPayer, setRandomPayer] = useState<string | null>(null);
 
+  const { data: group } = useGroup(id);
+  const { addExpense } = useAddExpense();
+
   // Dummy data for money owed/owing
   const amountYouOwe = 225.5;
   const amountOwedToYou = 150.0;
 
   // Calculate total group expenses from dummyExpenses
-  const totalGroupExpenses = dummyExpenses.reduce(
-    (sum, expense) => sum + expense.amount,
-    0,
-  );
+  const totalGroupExpenses = group?.members
+    .flatMap((x) => x.expenses)
+    .reduce((sum, expense) => sum + Number(expense.amount), 0);
 
   const handleEditGroup = (groupName: string, members: string[]) => {
     console.log("Editing group:", { groupName, members });
@@ -125,13 +142,17 @@ export default function GroupDetailPage() {
     description: string,
     amount: number,
     splitType: "equal" | "custom" | "random",
-    memberAmounts: { member: string; amount: number }[],
+    memberAmounts: { member: string; amount: number }[]
   ) => {
-    console.log("Adding expense:", {
-      description,
+    addExpense({
+      groupId: id,
       amount,
-      splitType,
-      memberAmounts,
+      description,
+      timestamp: new Date(),
+      debtors: memberAmounts.map(({ member, amount }) => ({
+        address: member,
+        fraction: amount,
+      })),
     });
     setIsAddExpenseDialogOpen(false);
     if (splitType === "random") {
@@ -156,6 +177,44 @@ export default function GroupDetailPage() {
     setIsTransactionDialogOpen(true);
   };
 
+  const expenseFeedItems =
+    group?.members.flatMap((member) =>
+      member.expenses.map((expense) => {
+        const date = new Date(Number(expense.timestamp) * 1000);
+        return {
+          date,
+          content: (
+            <ExpenseCard
+              key={`expense-${expense.timestamp}`}
+              description={expense.description}
+              amount={expense.amount}
+              date={date}
+              splitBetween={Object.keys(expense.debtors)}
+              addedBy={member.address}
+            />
+          ),
+        };
+      })
+    ) || [];
+
+  const paymentFeedItems =
+    dummyPayments.map((payment) => {
+      const date = new Date(payment.date.getTime());
+      return {
+        date,
+        content: (
+          <PaymentCard
+            key={`payment-${payment.id}`}
+            from={payment.from}
+            to={payment.to}
+            amounts={payment.amounts}
+            date={payment.date}
+            transactionId={payment.transactionId}
+          />
+        ),
+      };
+    }) || [];
+
   return (
     <div className="container mx-auto p-8">
       <div className="mb-6">
@@ -166,7 +225,7 @@ export default function GroupDetailPage() {
         </Link>
       </div>
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4 sm:gap-0">
-        <h1 className="text-3xl font-bold">{dummyGroup.name}</h1>
+        <h1 className="text-3xl font-bold">{group?.name}</h1>
         <div className="flex gap-2">
           <Button onClick={() => setIsAddExpenseDialogOpen(true)}>
             Add Expense
@@ -186,8 +245,10 @@ export default function GroupDetailPage() {
               <GroupForm
                 onSubmit={handleEditGroup}
                 onCancel={() => setIsEditDialogOpen(false)}
-                initialName={dummyGroup.name}
-                initialMembers={dummyGroup.members.map(m => m.address)}
+                initialName={group?.name}
+                initialMembers={
+                  group?.members?.map((member) => member.address) || []
+                }
                 groupId={
                   typeof id === "string" ? id : Array.isArray(id) ? id[0] : ""
                 }
@@ -198,7 +259,7 @@ export default function GroupDetailPage() {
       </div>
 
       <div className="flex items-center gap-4">
-        <button 
+        <button
           onClick={() => setIsMembersListOpen(true)}
           className="flex -space-x-2 hover:opacity-80 transition-opacity cursor-pointer"
         >
@@ -227,7 +288,7 @@ export default function GroupDetailPage() {
             <ExpenseForm
               onSubmit={handleAddExpense}
               onCancel={() => setIsAddExpenseDialogOpen(false)}
-              members={dummyGroup.members.map(m => m.address)}
+              members={group?.members?.map((member) => member.address) || []}
             />
           </DialogContent>
         </Dialog>
@@ -246,7 +307,7 @@ export default function GroupDetailPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              ${totalGroupExpenses.toFixed(2)}
+              ${totalGroupExpenses?.toFixed(2) || "0.00"}
             </p>
           </CardContent>
         </Card>
@@ -290,33 +351,9 @@ export default function GroupDetailPage() {
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Activity</h2>
         <div className="grid gap-4">
-          {[...dummyExpenses, ...dummyPayments]
+          {[...expenseFeedItems, ...paymentFeedItems]
             .sort((a, b) => b.date.getTime() - a.date.getTime())
-            .map((item) => {
-              if ("description" in item) {
-                return (
-                  <ExpenseCard
-                    key={`expense-${item.id}`}
-                    description={item.description}
-                    amount={item.amount}
-                    date={item.date}
-                    splitBetween={item.splitBetween}
-                    addedBy={item.addedBy}
-                  />
-                );
-              } else {
-                return (
-                  <PaymentCard
-                    key={`payment-${item.id}`}
-                    from={item.from}
-                    to={item.to}
-                    amounts={item.amounts}
-                    date={item.date}
-                    transactionId={item.transactionId}
-                  />
-                );
-              }
-            })}
+            .map((item) => item.content)}
         </div>
       </div>
 
@@ -363,18 +400,26 @@ export default function GroupDetailPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isRandomPayerDialogOpen} onOpenChange={setIsRandomPayerDialogOpen}>
+      <Dialog
+        open={isRandomPayerDialogOpen}
+        onOpenChange={setIsRandomPayerDialogOpen}
+      >
         <DialogContent className="sm:max-w-[425px] flex flex-col items-center">
           <DialogHeader>
             <DialogTitle>Choosing a random payer…</DialogTitle>
             <DialogDescription>
-              Using Flow's on-chain randomness to select who pays for this expense.
+              Using Flow's on-chain randomness to select who pays for this
+              expense.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center justify-center py-6">
             {randomPayer ? null : (
               <>
-                <Dice6 className={`h-12 w-12 text-primary mb-4 ${!showRevealButton ? 'animate-bounce' : ''}`} />
+                <Dice6
+                  className={`h-12 w-12 text-primary mb-4 ${
+                    !showRevealButton ? "animate-bounce" : ""
+                  }`}
+                />
                 {!showRevealButton && (
                   <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
                 )}
@@ -386,7 +431,8 @@ export default function GroupDetailPage() {
               onClick={() => {
                 // For now, just pick a random member and show it
                 const members = dummyGroup.members;
-                const picked = members[Math.floor(Math.random() * members.length)];
+                const picked =
+                  members[Math.floor(Math.random() * members.length)];
                 setRandomPayer(picked.address);
                 setShowRevealButton(false);
               }}

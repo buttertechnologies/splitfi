@@ -10,6 +10,18 @@ if (flowNetwork !== "mainnet") {
   console.info("App is running on:", flowNetwork);
 }
 
+const ACCESS_NODE_URL = {
+  mainnet: "https://rest-mainnet.onflow.org",
+  testnet: "https://rest-testnet.onflow.org",
+  emulator: "http://localhost:8888",
+}
+
+const DISCOVERY_URL = {
+  mainnet: "https://fcl-discovery.onflow.org/authn",
+  testnet: "https://fcl-discovery.onflow.org/testnet/authn",
+  emulator: "http://localhost:8701/fcl/authn",
+}
+
 export default function FlowProviderWrapper({
   children,
 }: {
@@ -19,8 +31,8 @@ export default function FlowProviderWrapper({
     <FlowProvider
       config={{
         flowNetwork,
-        accessNodeUrl: "https://rest-mainnet.onflow.org",
-        discoveryWallet: `https://fcl-discovery.onflow.org/${flowNetwork}/authn`,
+        accessNodeUrl: ACCESS_NODE_URL[flowNetwork],
+        discoveryWallet: DISCOVERY_URL[flowNetwork],
         appDetailTitle: "Divy",
         appDetailDescription:
           "Split group expenses on‑chain—track, share, and settle in crypto instantly and transparently.",

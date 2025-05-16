@@ -7,18 +7,24 @@ import { useState } from "react";
 
 interface ExpenseCardProps {
   description: string;
-  amount: number;
+  amount: string;
   date: Date;
   splitBetween: string[];
   addedBy: string;
 }
 
-export function ExpenseCard({ description, amount, date, splitBetween, addedBy }: ExpenseCardProps) {
+export function ExpenseCard({
+  description,
+  amount,
+  date,
+  splitBetween,
+  addedBy,
+}: ExpenseCardProps) {
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
 
   return (
     <>
-      <div 
+      <div
         className="bg-card rounded-lg border p-4 cursor-pointer hover:opacity-80 transition-opacity"
         onClick={() => setIsMembersDialogOpen(true)}
       >
@@ -37,16 +43,13 @@ export function ExpenseCard({ description, amount, date, splitBetween, addedBy }
             </p>
           </div>
           <div className="text-lg font-semibold">
-            ${amount.toFixed(2)}
+            ${Number(amount).toFixed(2)}
           </div>
         </div>
         <div className="flex items-center justify-between">
           <div className="flex -space-x-2">
             {splitBetween.map((address) => (
-              <Avatar
-                key={address}
-                className="border-2 border-background"
-              >
+              <Avatar key={address} className="border-2 border-background">
                 <AvatarFallback>
                   <User className="h-4 w-4" />
                 </AvatarFallback>
@@ -82,4 +85,4 @@ export function ExpenseCard({ description, amount, date, splitBetween, addedBy }
       />
     </>
   );
-} 
+}
