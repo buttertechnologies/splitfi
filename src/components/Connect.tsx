@@ -66,7 +66,6 @@ export function Connect({
             </span>
             <span className="w-px h-6 bg-gray-200 mx-1 hidden sm:inline-flex" />
             <span className="flex items-center gap-1 text-sm sm:text-base">
-              {/* Placeholder for avatar if needed in the future */}
               {displayAddress}
             </span>
           </span>
