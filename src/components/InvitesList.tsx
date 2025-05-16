@@ -1,0 +1,49 @@
+import React from "react";
+import { InviteCard } from "@/components/InviteCard";
+import { Mail } from "lucide-react";
+
+const mockInvites = [
+  {
+    id: "1",
+    groupName: "Roommates 2024",
+    invitedBy: "0x1234567890abcdef",
+    members: ["0x1234567890abcdef", "0xabcdef1234567890", "0x9876543210fedcba"],
+  },
+  {
+    id: "2",
+    groupName: "Trip to Japan",
+    invitedBy: "0xabcdef1234567890",
+    members: ["0xabcdef1234567890", "0x9876543210fedcba", "0x1234567890abcdef"],
+  },
+];
+
+export function InvitesList() {
+  if (mockInvites.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+        <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
+          <Mail className="w-12 h-12 text-muted-foreground" />
+        </div>
+        <h3 className="text-xl font-semibold mb-2">No Pending Invites</h3>
+        <p className="text-muted-foreground max-w-md">
+          You don't have any pending invites at the moment. When someone invites
+          you to a group, it will appear here.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {mockInvites.map((invite) => (
+        <InviteCard
+          key={invite.id}
+          id={invite.id}
+          groupName={invite.groupName}
+          invitedBy={invite.invitedBy}
+          members={invite.members}
+        />
+      ))}
+    </div>
+  );
+}
