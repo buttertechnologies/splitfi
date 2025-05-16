@@ -2,8 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { X, QrCodeIcon } from "lucide-react";
-import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
+import { X, QrCodeIcon, Check } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import dynamic from "next/dynamic";
 
 interface GroupFormProps {
@@ -14,11 +19,18 @@ interface GroupFormProps {
   groupId?: string;
 }
 
-export function GroupForm({ onSubmit, onCancel, initialName = "", initialMembers = [], groupId }: GroupFormProps) {
+export function GroupForm({
+  onSubmit,
+  onCancel,
+  initialName = "",
+  initialMembers = [],
+  groupId,
+}: GroupFormProps) {
   const [groupName, setGroupName] = useState(initialName);
   const [members, setMembers] = useState<string[]>(initialMembers);
   const [newMemberAddress, setNewMemberAddress] = useState("");
   const [qrOpen, setQrOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const QRCode = dynamic(() => import("react-qr-code"), { ssr: false });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,11 +48,11 @@ export function GroupForm({ onSubmit, onCancel, initialName = "", initialMembers
   };
 
   const removeMember = (address: string) => {
-    setMembers(members.filter(member => member !== address));
+    setMembers(members.filter((member) => member !== address));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       addMember();
     }
@@ -75,9 +87,9 @@ export function GroupForm({ onSubmit, onCancel, initialName = "", initialMembers
               placeholder="Flow address (0x...)"
               className="flex-1"
             />
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={addMember}
               disabled={!newMemberAddress}
             >
@@ -91,7 +103,9 @@ export function GroupForm({ onSubmit, onCancel, initialName = "", initialMembers
           <div className="col-span-3 flex flex-col items-center w-full">
             <div className="flex items-center w-full mb-2">
               <div className="flex-grow border-t border-gray-200" />
-              <span className="mx-3 text-xs text-muted-foreground">or add via QR</span>
+              <span className="mx-3 text-xs text-muted-foreground">
+                or invite via QR or link
+              </span>
               <div className="flex-grow border-t border-gray-200" />
             </div>
             <Dialog open={qrOpen} onOpenChange={setQrOpen}>
@@ -123,6 +137,33 @@ export function GroupForm({ onSubmit, onCancel, initialName = "", initialMembers
                 </div>
               </DialogContent>
             </Dialog>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={async () => {
+                if (groupId) {
+                  const inviteUrl = `${window.location.origin}/invite/${groupId}`;
+                  try {
+                    await navigator.clipboard.writeText(inviteUrl);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  } catch (e) {
+                    // handle error
+                  }
+                }
+              }}
+              disabled={!groupId}
+              className="flex items-center gap-2 w-full justify-center mt-2"
+            >
+              {copied ? (
+                <>
+                  <Check className="mr-1 h-4 w-4 text-green-600" />
+                  Copied!
+                </>
+              ) : (
+                <>Copy Invite Link</>
+              )}
+            </Button>
           </div>
         </div>
 
@@ -131,8 +172,8 @@ export function GroupForm({ onSubmit, onCancel, initialName = "", initialMembers
             <Label className="text-right">Members</Label>
             <div className="col-span-3 space-y-2">
               {members.map((address) => (
-                <div 
-                  key={address} 
+                <div
+                  key={address}
                   className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
                 >
                   <span className="text-sm font-mono">{address}</span>
@@ -156,13 +197,10 @@ export function GroupForm({ onSubmit, onCancel, initialName = "", initialMembers
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button 
-          type="submit"
-          disabled={!groupName || members.length === 0}
-        >
+        <Button type="submit" disabled={!groupName || members.length === 0}>
           {initialName ? "Save Changes" : "Create Group"}
         </Button>
       </div>
     </form>
   );
-} 
+}
