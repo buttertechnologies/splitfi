@@ -48,7 +48,7 @@ const Navbar = () => {
           </div>
 
           {/* Right side items */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 sm:gap-8">
             {user?.loggedIn && (
               <Link 
                 href="/invites" 
