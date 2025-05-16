@@ -13,13 +13,76 @@ import {
 import { GroupForm } from "@/components/GroupForm";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User } from "lucide-react";
+import {
+  User,
+  CreditCard,
+  Wallet,
+  Receipt,
+  Loader2,
+  Dice6,
+  PartyPopper,
+} from "lucide-react";
 import { ExpenseCard } from "@/components/ExpenseCard";
 import { PaymentCard } from "@/components/PaymentCard";
-import { MembersList } from "@/components/MembersList";
 import { TransactionDialog } from "@/components/TransactionDialog";
+import { MembersList } from "@/components/MembersList";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useGroup } from "@/hooks/useGroup";
 import { useAddExpense } from "@/hooks/useAddExpense";
+
+interface Member {
+  address: string;
+  status?: "pending" | "active";
+}
+
+const dummyGroup = {
+  name: "Weekend Trip to Vegas",
+  members: [
+    { address: "0x1234567890abcdef", status: "active" },
+    { address: "0xabcdef1234567890", status: "pending" },
+    { address: "0x9876543210fedcba", status: "active" },
+    { address: "0x1111111111111111", status: "pending" },
+  ] as Member[],
+};
+
+const dummyExpenses = [
+  {
+    id: 1,
+    description: "Hotel Room",
+    amount: 450.0,
+    date: new Date("2024-03-15T14:30:00"),
+    splitBetween: ["0x1234567890abcdef", "0xabcdef1234567890"],
+    addedBy: "0x1234567890abcdef",
+  },
+  {
+    id: 2,
+    description: "Dinner at Restaurant",
+    amount: 180.5,
+    date: new Date("2024-03-15T20:00:00"),
+    splitBetween: [
+      "0x1234567890abcdef",
+      "0xabcdef1234567890",
+      "0x9876543210fedcba",
+    ],
+    addedBy: "0xabcdef1234567890",
+  },
+  {
+    id: 3,
+    description: "Show Tickets",
+    amount: 300.0,
+    date: new Date("2024-03-16T19:00:00"),
+    splitBetween: ["0x1234567890abcdef", "0x9876543210fedcba"],
+    addedBy: "0x9876543210fedcba",
+  },
+];
 
 const dummyPayments = [
   {
@@ -29,6 +92,8 @@ const dummyPayments = [
     to: ["0x1234567890abcdef", "0x9876543210fedcba"],
     amounts: [150.0, 75.0],
     date: new Date("2024-03-16T10:00:00"),
+    transactionId:
+      "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
   },
   {
     type: "payment",
@@ -37,6 +102,8 @@ const dummyPayments = [
     to: ["0x1234567890abcdef"],
     amounts: [150.0],
     date: new Date("2024-03-16T11:30:00"),
+    transactionId:
+      "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
   },
 ];
 
@@ -45,14 +112,26 @@ export default function GroupDetailPage() {
   const { id } = params;
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
-  const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [selectedMembersTitle, setSelectedMembersTitle] = useState("");
-  const [selectedMembersDescription, setSelectedMembersDescription] =
-    useState("");
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
+  const [isPaymentAmountDialogOpen, setIsPaymentAmountDialogOpen] =
+    useState(false);
+  const [isMembersListOpen, setIsMembersListOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [isRandomPayerDialogOpen, setIsRandomPayerDialogOpen] = useState(false);
+  const [showRevealButton, setShowRevealButton] = useState(false);
+  const [randomPayer, setRandomPayer] = useState<string | null>(null);
+
   const { data: group } = useGroup(id);
   const { addExpense } = useAddExpense();
+
+  // Dummy data for money owed/owing
+  const amountYouOwe = 225.5;
+  const amountOwedToYou = 150.0;
+
+  // Calculate total group expenses from dummyExpenses
+  const totalGroupExpenses = group?.members
+    .flatMap((x) => x.expenses)
+    .reduce((sum, expense) => sum + Number(expense.amount), 0);
 
   const handleEditGroup = (groupName: string, members: string[]) => {
     console.log("Editing group:", { groupName, members });
@@ -62,19 +141,39 @@ export default function GroupDetailPage() {
   const handleAddExpense = (
     description: string,
     amount: number,
-    memberPercentages: { address: string; fraction: number }[]
+    splitType: "equal" | "custom" | "random",
+    memberAmounts: { member: string; amount: number }[]
   ) => {
     addExpense({
       groupId: id,
       amount,
       description,
       timestamp: new Date(),
-      debtors: memberPercentages.map(({ address, fraction }) => ({
-        address: address,
-        fraction: fraction,
+      debtors: memberAmounts.map(({ member, amount }) => ({
+        address: member,
+        fraction: amount,
       })),
     });
     setIsAddExpenseDialogOpen(false);
+    if (splitType === "random") {
+      setIsRandomPayerDialogOpen(true);
+      setShowRevealButton(false);
+      setRandomPayer(null);
+      setTimeout(() => {
+        setShowRevealButton(true);
+      }, 2500); // 2.5 seconds
+    } else {
+      setIsTransactionDialogOpen(true);
+    }
+  };
+
+  const handlePaymentAmountSubmit = () => {
+    const amount = parseFloat(paymentAmount);
+    if (isNaN(amount) || amount <= 0) {
+      return;
+    }
+    setIsPaymentAmountDialogOpen(false);
+    setPaymentAmount("");
     setIsTransactionDialogOpen(true);
   };
 
@@ -85,23 +184,14 @@ export default function GroupDetailPage() {
         return {
           date,
           content: (
-            <div
+            <ExpenseCard
               key={`expense-${expense.timestamp}`}
-              onClick={() => {
-                setSelectedMembers(Object.keys(expense.debtors));
-                setSelectedMembersTitle(`Members for ${expense.description}`);
-                setSelectedMembersDescription("Members who split this expense");
-                setIsMembersDialogOpen(true);
-              }}
-              className="cursor-pointer hover:opacity-80 transition-opacity"
-            >
-              <ExpenseCard
-                description={expense.description}
-                amount={expense.amount}
-                date={date}
-                splitBetween={Object.keys(expense.debtors)}
-              />
-            </div>
+              description={expense.description}
+              amount={expense.amount}
+              date={date}
+              splitBetween={Object.keys(expense.debtors)}
+              addedBy={member.address}
+            />
           ),
         };
       })
@@ -113,23 +203,14 @@ export default function GroupDetailPage() {
       return {
         date,
         content: (
-          <div
+          <PaymentCard
             key={`payment-${payment.id}`}
-            onClick={() => {
-              setSelectedMembers([payment.from, ...payment.to]);
-              setSelectedMembersTitle("Payment Members");
-              setSelectedMembersDescription("Members involved in this payment");
-              setIsMembersDialogOpen(true);
-            }}
-            className="cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            <PaymentCard
-              from={payment.from}
-              to={payment.to}
-              amounts={payment.amounts}
-              date={payment.date}
-            />
-          </div>
+            from={payment.from}
+            to={payment.to}
+            amounts={payment.amounts}
+            date={payment.date}
+            transactionId={payment.transactionId}
+          />
         ),
       };
     }) || [];
@@ -176,6 +257,22 @@ export default function GroupDetailPage() {
           </Dialog>
         </div>
       </div>
+
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => setIsMembersListOpen(true)}
+          className="flex -space-x-2 hover:opacity-80 transition-opacity cursor-pointer"
+        >
+          {dummyGroup.members.map((member) => (
+            <Avatar key={member.address} className="border-2 border-background">
+              <AvatarFallback>
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
+          ))}
+        </button>
+      </div>
+
       <div className="flex gap-2">
         <Dialog
           open={isAddExpenseDialogOpen}
@@ -196,39 +293,60 @@ export default function GroupDetailPage() {
           </DialogContent>
         </Dialog>
       </div>
-      <hr className="my-4 border-t border-gray-200" />
-      <div className="mt-4">
-        <h2 className="text-xl font-semibold mb-2">Group Members</h2>
-        <div
-          className="flex -space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => {
-            setSelectedMembers(
-              group?.members?.map((member) => member.address) || []
-            );
-            setSelectedMembersTitle("Group Members");
-            setSelectedMembersDescription("List of all members in this group");
-            setIsMembersDialogOpen(true);
-          }}
-        >
-          {(group?.members?.map((member) => member.address) || []).map(
-            (address) => (
-              <Avatar key={address} className="border-2 border-background">
-                <AvatarFallback>
-                  <User className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
-            )
-          )}
-        </div>
-      </div>
 
-      <MembersList
-        members={selectedMembers}
-        isOpen={isMembersDialogOpen}
-        onOpenChange={setIsMembersDialogOpen}
-        title={selectedMembersTitle}
-        description={selectedMembersDescription}
-      />
+      {/* Cards Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+        {/* Total Group Expenses */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center">
+              <Receipt className="mr-2 h-5 w-5" />
+              Total Group Expenses
+            </CardTitle>
+            <CardDescription>All expenses in this group</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">
+              ${totalGroupExpenses?.toFixed(2) || "0.00"}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* You are owed */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center">
+              <Wallet className="mr-2 h-5 w-5" />
+              You are owed
+            </CardTitle>
+            <CardDescription>Money others need to pay you</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">${amountOwedToYou.toFixed(2)}</p>
+          </CardContent>
+        </Card>
+
+        {/* You owe */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center">
+              <CreditCard className="mr-2 h-5 w-5" />
+              You owe
+            </CardTitle>
+            <CardDescription>Money you need to pay others</CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-between items-center">
+            <p className="text-2xl font-bold">${amountYouOwe.toFixed(2)}</p>
+            <Button
+              onClick={() => setIsPaymentAmountDialogOpen(true)}
+              variant="default"
+              className="ml-2"
+            >
+              Pay people back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Activity</h2>
@@ -239,10 +357,115 @@ export default function GroupDetailPage() {
         </div>
       </div>
 
+      <Dialog
+        open={isPaymentAmountDialogOpen}
+        onOpenChange={setIsPaymentAmountDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Enter Payment Amount</DialogTitle>
+            <DialogDescription>
+              How much would you like to pay back?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="amount">Amount</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  $
+                </span>
+                <Input
+                  id="amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  className="pl-7"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsPaymentAmountDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handlePaymentAmountSubmit}>Continue</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isRandomPayerDialogOpen}
+        onOpenChange={setIsRandomPayerDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[425px] flex flex-col items-center">
+          <DialogHeader>
+            <DialogTitle>Choosing a random payer…</DialogTitle>
+            <DialogDescription>
+              Using Flow's on-chain randomness to select who pays for this
+              expense.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center py-6">
+            {randomPayer ? null : (
+              <>
+                <Dice6
+                  className={`h-12 w-12 text-primary mb-4 ${
+                    !showRevealButton ? "animate-bounce" : ""
+                  }`}
+                />
+                {!showRevealButton && (
+                  <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
+                )}
+              </>
+            )}
+          </div>
+          {showRevealButton && !randomPayer && (
+            <Button
+              onClick={() => {
+                // For now, just pick a random member and show it
+                const members = dummyGroup.members;
+                const picked =
+                  members[Math.floor(Math.random() * members.length)];
+                setRandomPayer(picked.address);
+                setShowRevealButton(false);
+              }}
+              className="mt-4"
+            >
+              Reveal
+            </Button>
+          )}
+          {randomPayer && (
+            <div className="mt-6 text-center w-full flex flex-col items-center">
+              <PartyPopper className="h-10 w-10 text-primary mb-2 animate-pop" />
+              <p className="text-lg font-semibold mb-2">Selected payer:</p>
+              <p className="text-xl font-mono text-primary mb-6">
+                {randomPayer.slice(0, 6)}...{randomPayer.slice(-4)}
+              </p>
+              <Button onClick={() => setIsRandomPayerDialogOpen(false)}>
+                Done
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <TransactionDialog
         open={isTransactionDialogOpen}
         onOpenChange={setIsTransactionDialogOpen}
         txId="0x1234567890abcdef"
+      />
+
+      <MembersList
+        members={dummyGroup.members}
+        isOpen={isMembersListOpen}
+        onOpenChange={setIsMembersListOpen}
       />
     </div>
   );

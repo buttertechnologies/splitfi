@@ -13,7 +13,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, Copy, LogOut, Check } from "lucide-react";
 
-export function Connect() {
+export function Connect({ onConnect, onDisconnect }: { onConnect?: () => void; onDisconnect?: () => void }) {
   const { user, authenticate, unauthenticate } = useCurrentFlowUser();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -23,11 +23,12 @@ export function Connect() {
       ? `${user.addr.slice(0, 6)}...${user.addr.slice(-4)}`
       : "Connect Wallet";
 
-  const handleButtonClick = () => {
+  const handleButtonClick = async () => {
     if (user.loggedIn) {
       setOpen(true);
     } else {
-      authenticate();
+      await authenticate();
+      if (onConnect) onConnect();
     }
   };
 
@@ -42,6 +43,7 @@ export function Connect() {
   const handleDisconnect = () => {
     unauthenticate();
     setOpen(false);
+    if (onDisconnect) onDisconnect();
   };
 
   return (
