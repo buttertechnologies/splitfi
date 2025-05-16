@@ -37,6 +37,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useGroup } from "@/hooks/useGroup";
 import { useAddExpense } from "@/hooks/useAddExpense";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface Member {
   address: string;
@@ -382,13 +383,22 @@ export default function GroupDetailPage() {
                   placeholder="Enter amount"
                   className="flex-1"
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setPaymentAmount("100")}
-                >
-                  Max
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setPaymentAmount("100")}
+                      >
+                        Max
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>This is your max account balance.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
           </div>
