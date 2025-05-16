@@ -337,11 +337,17 @@ export default function GroupDetailPage() {
             <CardDescription>Money you need to pay others</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-between items-center">
-            <p className="text-2xl font-bold">${amountYouOwe.toFixed(2)}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-2xl font-bold">${amountYouOwe.toFixed(2)}</p>
+              {amountYouOwe <= 0 && (
+                <PartyPopper className="h-5 w-5 text-primary animate-bounce" />
+              )}
+            </div>
             <Button
               onClick={() => setIsPaymentAmountDialogOpen(true)}
               variant="default"
               className="ml-2"
+              disabled={amountYouOwe <= 0}
             >
               Pay people back
             </Button>
