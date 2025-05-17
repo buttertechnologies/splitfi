@@ -44,6 +44,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import { useUserBalanceByGroupId } from "@/hooks/useUserBalanceByGroupId";
 import { useCurrentFlowUser } from "@onflow/kit";
 
 interface Member {
@@ -132,10 +133,14 @@ export default function GroupDetailPage() {
   const [showOnlyUserExpenses, setShowOnlyUserExpenses] = useState(false);
 
   const { data: group } = useGroup({ id });
+  const { data: amountYouOwe } = useUserBalanceByGroupId({
+    address: user.addr,
+    groupId: id,
+  });
   const { addExpense } = useAddExpense();
 
   // Dummy data for money owed/owing
-  const amountYouOwe = 225.5;
+
   const amountOwedToYou = 150.0;
 
   // Calculate total group expenses from dummyExpenses
@@ -347,8 +352,10 @@ export default function GroupDetailPage() {
           </CardHeader>
           <CardContent className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <p className="text-2xl font-bold">${amountYouOwe.toFixed(2)}</p>
-              {amountYouOwe <= 0 && (
+              <p className="text-2xl font-bold">
+                ${Number(amountYouOwe || 0).toFixed(2)}
+              </p>
+              {Number(amountYouOwe || 0) <= 0 && (
                 <PartyPopper className="h-5 w-5 text-primary animate-bounce" />
               )}
             </div>
@@ -356,7 +363,7 @@ export default function GroupDetailPage() {
               onClick={() => setIsPaymentAmountDialogOpen(true)}
               variant="default"
               className="ml-2"
-              disabled={amountYouOwe <= 0}
+              disabled={Number(amountYouOwe || 0) <= 0}
             >
               Pay people back
             </Button>
