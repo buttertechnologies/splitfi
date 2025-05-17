@@ -1,6 +1,8 @@
 import React from "react";
 import { InviteCard } from "@/components/InviteCard";
 import { Mail } from "lucide-react";
+import { useInvitations } from "@/hooks/useInvitations";
+import { useCurrentFlowUser } from "@onflow/kit";
 
 const mockInvites = [
   {
@@ -18,6 +20,11 @@ const mockInvites = [
 ];
 
 export function InvitesList() {
+  const { user } = useCurrentFlowUser();
+  const { data: invitationList } = useInvitations({
+    address: user?.addr,
+  });
+
   if (mockInvites.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
@@ -35,13 +42,13 @@ export function InvitesList() {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {mockInvites.map((invite) => (
+      {invitationList?.invitations?.map((invite) => (
         <InviteCard
-          key={invite.id}
-          id={invite.id}
-          groupName={invite.groupName}
-          invitedBy={invite.invitedBy}
-          members={invite.members}
+          key={invite.uuid}
+          id={invite.uuid}
+          groupName={invite.group.name}
+          invitedBy={/*invite.invitedBy*/ "0x1234567890abcdef"}
+          members={invite.group.members.map((member) => member.address)}
         />
       ))}
     </div>

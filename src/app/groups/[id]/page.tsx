@@ -132,7 +132,7 @@ export default function GroupDetailPage() {
   const [randomPayer, setRandomPayer] = useState<string | null>(null);
   const [showOnlyUserExpenses, setShowOnlyUserExpenses] = useState(false);
 
-  const { data: group } = useGroup(id);
+  const { data: group } = useGroup({ id });
   const { data: amountYouOwe } = useUserBalanceByGroupId({
     address: user.addr,
     groupId: id,
@@ -191,6 +191,8 @@ export default function GroupDetailPage() {
     setPaymentAmount("");
     setIsTransactionDialogOpen(true);
   };
+
+  console.log(group);
 
   const expenseFeedItems =
     group?.members.flatMap((member) =>

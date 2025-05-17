@@ -5,21 +5,34 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { TransactionDialog } from "@/components/TransactionDialog";
-
-const dummyGroup = {
-  name: "Weekend Trip to Vegas",
-  members: ["0x1234567890abcdef", "0xabcdef1234567890", "0x9876543210fedcba"],
-};
+import { useAcceptInvitation } from "@/hooks/useAcceptInvitation";
+import { useGroup } from "@/hooks/useGroup";
+import { useInvitations } from "@/hooks/useInvitations";
+import { useCurrentFlowUser } from "@onflow/kit";
 
 export default function JoinGroupPage() {
-  const params = useParams();
-  const { id } = params;
+  const params = useParams<{ id: string }>();
+  const { id: invitationUuid } = params;
   const [txOpen, setTxOpen] = useState(false);
   const [canGoToGroup, setCanGoToGroup] = useState(false);
   const router = useRouter();
+  const { acceptInvitation } = useAcceptInvitation();
+  const { user } = useCurrentFlowUser();
+
+  const { data: invitation } = useInvitations({ address: user?.addr });
+  const groupUuid = invitation?.invitations?.find(
+    (i) => i.uuid === invitationUuid
+  )?.group?.uuid;
+  const { data: group } = useGroup({
+    id: groupUuid,
+  });
 
   const handleJoin = () => {
-    setTxOpen(true);
+    //setTxOpen(true);
+    groupUuid &&
+      acceptInvitation({
+        groupId: groupUuid,
+      });
   };
 
   const handleSuccess = () => {
@@ -27,10 +40,10 @@ export default function JoinGroupPage() {
   };
 
   const handleGoToGroup = () => {
-    if (typeof id === 'string') {
-      router.push(`/groups/${id}`);
-    } else if (Array.isArray(id) && id[0]) {
-      router.push(`/groups/${id[0]}`);
+    if (typeof groupUuid === "string") {
+      router.push(`/groups/${groupUuid}`);
+    } else if (Array.isArray(groupUuid) && groupUuid[0]) {
+      router.push(`/groups/${groupUuid[0]}`);
     }
   };
 
@@ -41,14 +54,14 @@ export default function JoinGroupPage() {
           You've been invited to a group!
         </h1>
         <div className="w-full text-center">
-          <div className="text-lg font-semibold mb-1">{dummyGroup.name}</div>
+          <div className="text-lg font-semibold mb-1">{group?.name}</div>
         </div>
         <div className="w-full">
           <div className="text-sm font-medium mb-2">Members</div>
           <div className="flex flex-col gap-2">
-            {dummyGroup.members.map((address) => (
+            {group?.members.map((member) => (
               <div
-                key={address}
+                key={member.address}
                 className="flex items-center gap-3 p-2 bg-gray-100 dark:bg-gray-800 rounded-md"
               >
                 <Avatar className="h-8 w-8">
@@ -56,18 +69,26 @@ export default function JoinGroupPage() {
                     <User className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
-                <span className="font-mono text-xs">{address}</span>
+                <span className="font-mono text-xs">{member.address}</span>
               </div>
             ))}
           </div>
         </div>
         <Button
-          className={`w-full mt-4 flex items-center justify-center gap-2 ${canGoToGroup ? 'bg-green-600 hover:bg-green-700 text-white' : ''}`}
+          className={`w-full mt-4 flex items-center justify-center gap-2 ${
+            canGoToGroup ? "bg-green-600 hover:bg-green-700 text-white" : ""
+          }`}
           size="lg"
           onClick={canGoToGroup ? handleGoToGroup : handleJoin}
-          disabled={txOpen && !canGoToGroup}
+          disabled={(txOpen && !canGoToGroup) || !groupUuid}
         >
-          {canGoToGroup ? <><CheckCircle2 className="h-5 w-5" /> Go to Group</> : 'Join Group'}
+          {canGoToGroup ? (
+            <>
+              <CheckCircle2 className="h-5 w-5" /> Go to Group
+            </>
+          ) : (
+            "Join Group"
+          )}
         </Button>
       </div>
       <TransactionDialog

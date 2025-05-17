@@ -16,3 +16,12 @@ export interface ExpenseSummary {
   timestamp: string;
   debtors: { [address: string]: string };
 }
+
+export interface InvitationList {
+  invitations: Invitation[];
+}
+
+export interface Invitation {
+  uuid: string;
+  group: GroupSummary;
+}

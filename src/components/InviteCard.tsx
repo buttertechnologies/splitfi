@@ -1,4 +1,11 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User } from "lucide-react";
@@ -11,14 +18,21 @@ interface InviteCardProps {
   members: string[];
 }
 
-export function InviteCard({ id, groupName, invitedBy, members }: InviteCardProps) {
+export function InviteCard({
+  id,
+  groupName,
+  invitedBy,
+  members,
+}: InviteCardProps) {
   const router = useRouter();
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>{groupName}</CardTitle>
-        <CardDescription>Invited by {invitedBy.slice(0, 6)}...{invitedBy.slice(-4)}</CardDescription>
+        <CardDescription>
+          Invited by {invitedBy.slice(0, 6)}...{invitedBy.slice(-4)}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex -space-x-2">
@@ -32,13 +46,10 @@ export function InviteCard({ id, groupName, invitedBy, members }: InviteCardProp
         </div>
       </CardContent>
       <CardFooter>
-        <Button 
-          className="w-full"
-          onClick={() => router.push(`/join/${id}`)}
-        >
+        <Button className="w-full" onClick={() => router.push(`/join/${id}`)}>
           View Invite
         </Button>
       </CardFooter>
     </Card>
   );
-} 
+}

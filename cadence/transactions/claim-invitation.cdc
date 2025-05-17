@@ -1,25 +1,41 @@
 import "Divy"
 
 /**
- * Invites a member to a group.
+ * Claim an invitation to a group.
  */
 transaction (
     groupId: UInt64,
-    recipient: Address,
 ) {
-    let groupAdminRef: auth(Divy.Admin) &Divy.Group
+    var membershipCollectionRef: auth(Divy.Owner) &Divy.MembershipCollection?
 
-    prepare(account: auth(Storage) &Account) {
-        // Get an owner reference to the membership
-        let membershipRef = account.storage.borrow<auth(Divy.Owner) &Divy.Membership>(
+    prepare(account: auth(SaveValue, BorrowValue, PublishCapability, UnpublishCapability, IssueStorageCapabilityController) &Account) {
+        // Initialize the membership collection if it doesn't exist
+        self.membershipCollectionRef = account.storage.borrow<auth(Divy.Owner)&Divy.MembershipCollection>(
             from: Divy.MembershipCollectionStoragePath
-        ) ?? panic("Group not found")
+        )
+        if (self.membershipCollectionRef == nil) {
+            account.storage.save(<-Divy.createMembershipCollection(), to: Divy.MembershipCollectionStoragePath)
+            self.membershipCollectionRef = account.storage.borrow<auth(Divy.Owner)&Divy.MembershipCollection>(
+                from: Divy.MembershipCollectionStoragePath
+            )
+        }
 
-        // Borrow admin reference to the group
-        self.groupAdminRef = membershipRef.borrowAdmin()
+        // Publish the membership collection if it doesn't exist
+        let pubCap = account.capabilities.get<auth(Divy.Owner) &Divy.MembershipCollection>(
+            Divy.MembershipCollectionPublicPath
+        )
+        if (pubCap.check() == false) {
+            account.capabilities.unpublish(Divy.MembershipCollectionPublicPath)
+            account.capabilities.publish(
+                account.capabilities.storage.issue<&Divy.MembershipCollection>(
+                    Divy.MembershipCollectionStoragePath,
+                ),
+                at: Divy.MembershipCollectionPublicPath,
+            )
+        }
     }
 
     execute {
-        self.groupAdminRef.inviteMember(address: recipient)
+        self.membershipCollectionRef!.claimInvitation(groupId: groupId)
     }
 }
