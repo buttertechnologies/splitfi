@@ -35,9 +35,9 @@ export default function LandingPage() {
         {/* Off-centered overlapping circles background */}
         <div className="absolute -top-32 -left-32 w-[500px] h-[500px] z-0 pointer-events-none">
           <svg width="500" height="500" viewBox="0 0 500 500" fill="none" className="w-full h-full">
-            <circle cx="200" cy="200" r="180" fill="#fde68a" opacity="0.18"/>
-            <circle cx="320" cy="280" r="140" fill="#a7f3d0" opacity="0.15"/>
-            <circle cx="120" cy="320" r="100" fill="#fca5a5" opacity="0.12"/>
+            <circle cx="200" cy="200" r="180" fill="#7c3aed" opacity="0.18"/>
+            <circle cx="320" cy="280" r="140" fill="#a1a1aa" opacity="0.15"/>
+            <circle cx="120" cy="320" r="100" fill="#c4b5fd" opacity="0.18"/>
           </svg>
         </div>
         {/* End background */}

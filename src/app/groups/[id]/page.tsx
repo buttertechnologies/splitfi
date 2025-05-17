@@ -21,6 +21,7 @@ import {
   Loader2,
   Dice6,
   PartyPopper,
+  Filter,
 } from "lucide-react";
 import { ExpenseCard } from "@/components/ExpenseCard";
 import { PaymentCard } from "@/components/PaymentCard";
@@ -118,6 +119,7 @@ const dummyPayments = [
 export default function GroupDetailPage() {
   const params = useParams<{ id: string }>();
   const { id } = params;
+  const { user } = useCurrentFlowUser();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
@@ -128,8 +130,8 @@ export default function GroupDetailPage() {
   const [isRandomPayerDialogOpen, setIsRandomPayerDialogOpen] = useState(false);
   const [showRevealButton, setShowRevealButton] = useState(false);
   const [randomPayer, setRandomPayer] = useState<string | null>(null);
+  const [showOnlyUserExpenses, setShowOnlyUserExpenses] = useState(false);
 
-  const { user } = useCurrentFlowUser();
   const { data: group } = useGroup(id);
   const { data: amountYouOwe } = useUserBalanceByGroupId({
     address: user.addr,
@@ -349,13 +351,19 @@ export default function GroupDetailPage() {
             <CardDescription>Money you need to pay others</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-between items-center">
-            <p className="text-2xl font-bold">
-              ${Number(amountYouOwe || 0).toFixed(2)}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-2xl font-bold">
+                ${Number(amountYouOwe || 0).toFixed(2)}
+              </p>
+              {Number(amountYouOwe || 0) <= 0 && (
+                <PartyPopper className="h-5 w-5 text-primary animate-bounce" />
+              )}
+            </div>
             <Button
               onClick={() => setIsPaymentAmountDialogOpen(true)}
               variant="default"
               className="ml-2"
+              disabled={Number(amountYouOwe || 0) <= 0}
             >
               Pay people back
             </Button>
@@ -364,9 +372,24 @@ export default function GroupDetailPage() {
       </div>
 
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Activity</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Activity</h2>
+          <Button
+            variant={showOnlyUserExpenses ? "default" : "outline"}
+            onClick={() => setShowOnlyUserExpenses(!showOnlyUserExpenses)}
+            className="flex items-center gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            {showOnlyUserExpenses ? "Show All Expenses" : "Show My Expenses"}
+          </Button>
+        </div>
         <div className="grid gap-4">
           {[...expenseFeedItems, ...paymentFeedItems]
+            .filter((item) => {
+              if (!showOnlyUserExpenses) return true;
+              // Only show expenses added by current user
+              return item.content.props.addedBy === user?.addr;
+            })
             .sort((a, b) => b.date.getTime() - a.date.getTime())
             .map((item) => item.content)}
         </div>
