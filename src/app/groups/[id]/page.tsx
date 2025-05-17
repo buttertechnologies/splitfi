@@ -192,6 +192,8 @@ export default function GroupDetailPage() {
     setIsTransactionDialogOpen(true);
   };
 
+  console.log(group);
+
   const expenseFeedItems =
     group?.members.flatMap((member) =>
       member.expenses.map((expense) => {

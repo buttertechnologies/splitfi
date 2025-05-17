@@ -12,22 +12,27 @@ import { useCurrentFlowUser } from "@onflow/kit";
 
 export default function JoinGroupPage() {
   const params = useParams<{ id: string }>();
-  const { id } = params;
+  const { id: invitationUuid } = params;
   const [txOpen, setTxOpen] = useState(false);
   const [canGoToGroup, setCanGoToGroup] = useState(false);
   const router = useRouter();
   const { acceptInvitation } = useAcceptInvitation();
   const { user } = useCurrentFlowUser();
+
   const { data: invitation } = useInvitations({ address: user?.addr });
+  const groupUuid = invitation?.invitations?.find(
+    (i) => i.uuid === invitationUuid
+  )?.group?.uuid;
   const { data: group } = useGroup({
-    id: invitation?.invitations?.find((i) => i.uuid === id)?.group?.uuid,
+    id: groupUuid,
   });
 
   const handleJoin = () => {
     //setTxOpen(true);
-    acceptInvitation({
-      groupId: id,
-    });
+    groupUuid &&
+      acceptInvitation({
+        groupId: groupUuid,
+      });
   };
 
   const handleSuccess = () => {
@@ -35,10 +40,10 @@ export default function JoinGroupPage() {
   };
 
   const handleGoToGroup = () => {
-    if (typeof id === "string") {
-      router.push(`/groups/${id}`);
-    } else if (Array.isArray(id) && id[0]) {
-      router.push(`/groups/${id[0]}`);
+    if (typeof groupUuid === "string") {
+      router.push(`/groups/${groupUuid}`);
+    } else if (Array.isArray(groupUuid) && groupUuid[0]) {
+      router.push(`/groups/${groupUuid[0]}`);
     }
   };
 
@@ -75,7 +80,7 @@ export default function JoinGroupPage() {
           }`}
           size="lg"
           onClick={canGoToGroup ? handleGoToGroup : handleJoin}
-          disabled={txOpen && !canGoToGroup}
+          disabled={(txOpen && !canGoToGroup) || !groupUuid}
         >
           {canGoToGroup ? (
             <>

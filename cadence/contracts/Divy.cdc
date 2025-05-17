@@ -159,24 +159,29 @@ contract Divy {
         /**
          * Get the current balance owed to the group by a member (or negative if they are owed money).
          */
-        access(all) fun getMemberBalance(address: Address): UFix64 {
+        access(all) fun getMemberBalance(address: Address): Fix64 {
             let member = self.members[address]!.borrow()
                 ?? panic("Member not found for address ".concat(address.toString()))
-            return member.getTotalPaid() - self.getPrincipalOwing(address: address)
+            
+            return Fix64(member.getTotalPaid()) - self.getPrincipalOwing(address: address)
         }
 
         /**
          * Get the total amount owed by a member before any payments are made.
          */
-        access(all) fun getPrincipalOwing(address: Address): UFix64 {
-            let member = self.members[address]!.borrow()
-                ?? panic("Member not found for address ".concat(address.toString()))
-            
-            var totalOwing = 0.0
-            for expense in member.expenses {
-                for debtor in expense.debtors.keys {
-                    if debtor == address {
-                        totalOwing = expense.amount
+        access(all) fun getPrincipalOwing(address: Address): Fix64 {            
+            var totalOwing = Fix64(0.0)
+            for member in self.members.values {
+                let memberRef = member.borrow()
+                    ?? panic("Member not found for address ".concat(member.collectionCapability.address.toString()))
+                if memberRef.owner!.address == address {
+                    continue
+                }
+                for expense in memberRef.expenses {
+                    for debtor in expense.debtors.keys {
+                        if debtor == address {
+                            totalOwing = totalOwing + (Fix64(expense.debtors[debtor]!) * Fix64(expense.amount))
+                        }
                     }
                 }
             }
@@ -317,7 +322,7 @@ contract Divy {
             self.amount = amount
             self.timestamp = timestamp
             self.description = description
-            self.debtors = {}
+            self.debtors = debtors
         }
 
         // TODO: IS THIS SAFE IF SOMEONE CAN GET A REFERNCE?
@@ -416,11 +421,12 @@ contract Divy {
                     continue
                 }
 
-                let balance = group.getMemberBalance(address: peerAddress)
-                if balance <= 0.0 {
+                let signedBalance = group.getMemberBalance(address: peerAddress)
+                if signedBalance <= 0.0 {
                     continue
                 }
 
+                let balance = UFix64(signedBalance)
                 let paymentAmount = balance > vaultRef.balance ? vaultRef.balance : balance
 
                 let peerMember = group.members[peerAddress]?.borrow()

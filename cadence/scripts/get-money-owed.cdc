@@ -1,6 +1,6 @@
 import "Divy"
 
-access(all) fun main(groupId: UInt64, address: Address): UFix64 {
+access(all) fun main(groupId: UInt64, address: Address): Fix64 {
     // Get the group from the contract
     let groupRef = Divy.borrowGroup(groupId: groupId)
         ?? panic("Group not found")
