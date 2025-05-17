@@ -13,11 +13,12 @@ transaction(
 
     prepare(account: auth(Storage) &Account) {
         // Get an owner reference to the membership
-        let membershipRef = account.storage.borrow<auth(Divy.Owner) &Divy.MembershipCollection>(from: Divy.MembershipCollectionStoragePath)
-            ?? panic("Membership collection not found")
+        let membershipCollectionRef = account.storage.borrow<auth(Divy.Owner) &Divy.MembershipCollection>(
+            from: Divy.MembershipCollectionStoragePath
+        ) ?? panic("Membership collection not found")
 
         // Borrow admin reference to the group
-        let membershipOwnerRef = membershipRef.borrowOwnerByGroupId(groupId: groupId)
+        let membershipOwnerRef = membershipCollectionRef.borrowOwnerByGroupId(groupId: groupId)
             ?? panic("Group not found")
 
         // Get the group admin reference

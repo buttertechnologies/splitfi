@@ -1,25 +1,21 @@
 import "Divy"
 
 /**
- * Invites a member to a group.
+ * Claim an invitation to a group.
  */
 transaction (
     groupId: UInt64,
-    recipient: Address,
 ) {
-    let groupAdminRef: auth(Divy.Admin) &Divy.Group
+    let membershipCollectionRef: auth(Divy.Owner) &Divy.MembershipCollection
 
     prepare(account: auth(Storage) &Account) {
-        // Get an owner reference to the membership
-        let membershipRef = account.storage.borrow<auth(Divy.Owner) &Divy.Membership>(
+        // Get an owner reference to the membership collection
+        self.membershipCollectionRef = account.storage.borrow<auth(Divy.Owner) &Divy.MembershipCollection>(
             from: Divy.MembershipCollectionStoragePath
         ) ?? panic("Group not found")
-
-        // Borrow admin reference to the group
-        self.groupAdminRef = membershipRef.borrowAdmin()
     }
 
     execute {
-        self.groupAdminRef.inviteMember(address: recipient)
+        self.membershipCollectionRef.claimInvitation(groupId: groupId)
     }
 }

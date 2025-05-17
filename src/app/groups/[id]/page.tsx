@@ -38,7 +38,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useGroup } from "@/hooks/useGroup";
 import { useAddExpense } from "@/hooks/useAddExpense";
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { useCurrentFlowUser } from "@onflow/kit";
 
 interface Member {
@@ -126,7 +131,7 @@ export default function GroupDetailPage() {
   const [randomPayer, setRandomPayer] = useState<string | null>(null);
   const [showOnlyUserExpenses, setShowOnlyUserExpenses] = useState(false);
 
-  const { data: group } = useGroup(id);
+  const { data: group } = useGroup({ id });
   const { addExpense } = useAddExpense();
 
   // Dummy data for money owed/owing
@@ -373,7 +378,7 @@ export default function GroupDetailPage() {
         </div>
         <div className="grid gap-4">
           {[...expenseFeedItems, ...paymentFeedItems]
-            .filter(item => {
+            .filter((item) => {
               if (!showOnlyUserExpenses) return true;
               // Only show expenses added by current user
               return item.content.props.addedBy === user?.addr;

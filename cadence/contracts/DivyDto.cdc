@@ -68,8 +68,8 @@ access(all) contract DivyDto {
 
             // Revoked invitations will not have a group and be nil
             let groupId = invitationRef.getGroupId()
-            let groupRef = groupId != nil ? Divy.borrowGroup(groupId: groupId) : nil
-            self.group = groupRef != nil ? GroupSummaryDto(groupRef: groupRef!) : nil
+            let groupRef = Divy.borrowGroup(groupId: groupId)!
+            self.group = GroupSummaryDto(groupRef: groupRef)
         }
     }
 
