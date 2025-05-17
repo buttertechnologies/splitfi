@@ -1,9 +1,8 @@
 import { useFlowQuery } from "@onflow/kit";
 import { UseQueryResult } from "@tanstack/react-query";
-import { GroupSummary } from "@/types/models";
 import GetUsdfBalance from "../../cadence/scripts/get-usdf-balance.cdc";
 
-export function useUserGroups(address?: string) {
+export function useUsdfBalance(address?: string) {
   return useFlowQuery({
     cadence: GetUsdfBalance,
     args: (arg, t) => [
@@ -12,5 +11,5 @@ export function useUserGroups(address?: string) {
     query: {
       enabled: !!address,
     },
-  }) as UseQueryResult<GroupSummary[], Error>;
+  }) as UseQueryResult<string, Error>;
 }

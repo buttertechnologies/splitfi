@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, Copy, LogOut, Check } from "lucide-react";
+import { useUsdfBalance } from "@/hooks/useUsdfBalance";
 
 export function Connect({
   onConnect,
@@ -21,6 +22,7 @@ export function Connect({
   onDisconnect?: () => void;
 }) {
   const { user, authenticate, unauthenticate } = useCurrentFlowUser();
+  const { data: balance } = useUsdfBalance(user.addr);
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -62,7 +64,10 @@ export function Connect({
         {user.loggedIn ? (
           <span className="flex items-center gap-2">
             <span className="font-semibold text-base flex items-center hidden sm:inline-flex">
-              $8.09
+              {Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: "USD",
+              }).format(balance ? Number(balance) : 0)}
             </span>
             <span className="w-px h-6 bg-gray-200 mx-1 hidden sm:inline-flex" />
             <span className="flex items-center gap-1 text-sm sm:text-base">
@@ -86,7 +91,10 @@ export function Connect({
                 {displayAddress}
               </DialogTitle>
               <div className="text-center text-sm text-gray-500 -mt-1">
-                $8.09
+                {Intl.NumberFormat("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                }).format(balance ? Number(balance) : 0)}
               </div>
             </DialogHeader>
             <div className="flex gap-2 w-full">

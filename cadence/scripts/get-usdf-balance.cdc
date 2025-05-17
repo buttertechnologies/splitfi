@@ -12,11 +12,11 @@ access(all) fun main(address: Address): UFix64 {
     )! as! FungibleTokenMetadataViews.FTVaultData
 
     // Get the USDF balance of the given address
-    let usdfBalance = getAccount(address)
+    let usdfVault = getAccount(address)
         .capabilities
         .borrow<&EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.Vault>(
             vaultData.receiverPath
-        ) ?? panic("Could not borrow USDF vault")
+        )
 
-    return usdfBalance.balance
+    return usdfVault?.balance ?? 0.0
 }
