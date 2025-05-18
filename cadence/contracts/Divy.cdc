@@ -304,7 +304,6 @@ contract Divy {
         }
     }
 
-
     /**
      * The `MemberExpense` resource is used to represent incurred by a member of a group.
      */
@@ -398,7 +397,7 @@ contract Divy {
         // We need a holder vault for any that can't be distributed
         access(all) fun makePayment(
             vaultRef: auth(FungibleToken.Withdraw) &EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.Vault,
-            address: Address
+            maxAmount: UFix64
         ) {
             let group = self.borrowGroup()
 
@@ -417,7 +416,7 @@ contract Divy {
                     break
                 }
 
-                if peerAddress == address {
+                if group.members[peerAddress]!.collectionCapability.address == peerAddress {
                     continue
                 }
 

@@ -46,52 +46,13 @@ import {
 } from "@/components/ui/tooltip";
 import { useUserBalanceByGroupId } from "@/hooks/useUserBalanceByGroupId";
 import { useCurrentFlowUser } from "@onflow/kit";
+import { useUsdfBalance } from "@/hooks/useUsdfBalance";
+import { useMakePayment } from "@/hooks/useMakePayment";
 
 interface Member {
   address: string;
   status?: "pending" | "active";
 }
-
-const dummyGroup = {
-  name: "Weekend Trip to Vegas",
-  members: [
-    { address: "0x1234567890abcdef", status: "active" },
-    { address: "0xabcdef1234567890", status: "pending" },
-    { address: "0x9876543210fedcba", status: "active" },
-    { address: "0x1111111111111111", status: "pending" },
-  ] as Member[],
-};
-
-const dummyExpenses = [
-  {
-    id: 1,
-    description: "Hotel Room",
-    amount: 450.0,
-    date: new Date("2024-03-15T14:30:00"),
-    splitBetween: ["0x1234567890abcdef", "0xabcdef1234567890"],
-    addedBy: "0x1234567890abcdef",
-  },
-  {
-    id: 2,
-    description: "Dinner at Restaurant",
-    amount: 180.5,
-    date: new Date("2024-03-15T20:00:00"),
-    splitBetween: [
-      "0x1234567890abcdef",
-      "0xabcdef1234567890",
-      "0x9876543210fedcba",
-    ],
-    addedBy: "0xabcdef1234567890",
-  },
-  {
-    id: 3,
-    description: "Show Tickets",
-    amount: 300.0,
-    date: new Date("2024-03-16T19:00:00"),
-    splitBetween: ["0x1234567890abcdef", "0x9876543210fedcba"],
-    addedBy: "0x9876543210fedcba",
-  },
-];
 
 const dummyPayments = [
   {
@@ -133,11 +94,23 @@ export default function GroupDetailPage() {
   const [showOnlyUserExpenses, setShowOnlyUserExpenses] = useState(false);
 
   const { data: group } = useGroup({ id });
-  const { data: amountYouOwe } = useUserBalanceByGroupId({
+  const { data: userGroupBalance } = useUserBalanceByGroupId({
     address: user.addr,
     groupId: id,
   });
+  const amountYouOwe =
+    userGroupBalance != null && Number(userGroupBalance) > 0
+      ? -Number(userGroupBalance)
+      : 0;
+  const amountYouAreOwed =
+    userGroupBalance != null && Number(userGroupBalance) < 0
+      ? Number(userGroupBalance)
+      : 0;
   const { addExpense } = useAddExpense();
+  const { data: usdfBalance } = useUsdfBalance({
+    address: user.addr,
+  });
+  const { makePayment } = useMakePayment();
 
   // Dummy data for money owed/owing
 
@@ -187,6 +160,12 @@ export default function GroupDetailPage() {
     if (isNaN(amount) || amount <= 0) {
       return;
     }
+
+    makePayment({
+      groupId: id,
+      maxAmount: amount,
+    });
+
     setIsPaymentAmountDialogOpen(false);
     setPaymentAmount("");
     setIsTransactionDialogOpen(true);
@@ -280,7 +259,7 @@ export default function GroupDetailPage() {
           onClick={() => setIsMembersListOpen(true)}
           className="flex -space-x-2 hover:opacity-80 transition-opacity cursor-pointer"
         >
-          {dummyGroup.members.map((member) => (
+          {group?.members?.map((member) => (
             <Avatar key={member.address} className="border-2 border-background">
               <AvatarFallback>
                 <User className="h-4 w-4" />
@@ -416,6 +395,10 @@ export default function GroupDetailPage() {
                   id="amount"
                   type="number"
                   min="0"
+                  max={Math.min(
+                    Number(usdfBalance || 0),
+                    Number(amountYouOwe || 0)
+                  )}
                   step="0.01"
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
@@ -428,7 +411,14 @@ export default function GroupDetailPage() {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => setPaymentAmount("100")}
+                        onClick={() =>
+                          setPaymentAmount(
+                            Math.min(
+                              Number(usdfBalance || 0),
+                              Number(amountYouOwe || 0)
+                            ).toFixed(8)
+                          )
+                        }
                       >
                         Max
                       </Button>
@@ -482,8 +472,9 @@ export default function GroupDetailPage() {
           {showRevealButton && !randomPayer && (
             <Button
               onClick={() => {
+                if (!group) return;
                 // For now, just pick a random member and show it
-                const members = dummyGroup.members;
+                const members = group.members;
                 const picked =
                   members[Math.floor(Math.random() * members.length)];
                 setRandomPayer(picked.address);
@@ -516,7 +507,7 @@ export default function GroupDetailPage() {
       />
 
       <MembersList
-        members={dummyGroup.members}
+        members={group?.members?.map((member) => member.address) || []}
         isOpen={isMembersListOpen}
         onOpenChange={setIsMembersListOpen}
       />

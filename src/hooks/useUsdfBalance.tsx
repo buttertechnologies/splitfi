@@ -2,7 +2,11 @@ import { useFlowQuery } from "@onflow/kit";
 import { UseQueryResult } from "@tanstack/react-query";
 import GetUsdfBalance from "../../cadence/scripts/get-usdf-balance.cdc";
 
-export function useUsdfBalance(address?: string) {
+type UseUsdfBalanceParams = {
+  address?: string;
+};
+
+export function useUsdfBalance({ address }: UseUsdfBalanceParams) {
   return useFlowQuery({
     cadence: GetUsdfBalance,
     args: (arg, t) => [

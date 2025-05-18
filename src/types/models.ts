@@ -25,3 +25,11 @@ export interface Invitation {
   uuid: string;
   group: GroupSummary;
 }
+
+export interface PaymentInfo {
+  timestamp: string;
+  recipients: {
+    address: string;
+    amount: string;
+  }[];
+}

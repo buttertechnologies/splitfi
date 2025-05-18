@@ -18,10 +18,21 @@ access(all) contract DivyDto {
         }
     }
 
+    access(all) struct PaymentInfoDto {
+        access(all) let recipients: {Address: UFix64}
+        access(all) let timestamp: UFix64
+
+        init(payment: &Divy.PaymentInfo) {
+            self.recipients = *payment.recipients
+            self.timestamp = payment.timestamp
+        }
+    }
+
     access(all) struct MembershipDto {
         access(all) let uuid: UInt64
         access(all) let address: Address
         access(all) let expenses: [MemberExpenseDto]
+        access(all) let payments: [PaymentInfoDto]
 
         init(memberRef: &Divy.Membership) {
             self.uuid = memberRef.uuid
@@ -33,6 +44,13 @@ access(all) contract DivyDto {
                 expenses.append(expenseDto)
             }
             self.expenses = expenses
+
+            let payments: [PaymentInfoDto] = []
+            for payment in memberRef.payments {
+                let paymentDto = PaymentInfoDto(payment: payment)
+                payments.append(paymentDto)
+            }
+            self.payments = payments
         }
     }
 
