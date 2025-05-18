@@ -6,9 +6,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Loader2, CheckCircle2, ExternalLink } from "lucide-react";
+import { Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FlowNetwork } from "@onflow/kit";
+import { TransactionLink } from "@/components/TransactionLink";
 
 interface TransactionDialogProps {
   open: boolean;
@@ -23,12 +23,6 @@ interface TransactionDialogProps {
   closeOnSuccess?: boolean;
 }
 
-const BLOCK_EXPLORER_URL = {
-  mainnet: "https://flowscan.io",
-  testnet: "https://testnet.flowscan.org",
-  emulator: "https://testnet.flowscan.org",
-};
-
 export const TransactionDialog: React.FC<TransactionDialogProps> = ({
   open,
   onOpenChange,
@@ -42,10 +36,6 @@ export const TransactionDialog: React.FC<TransactionDialogProps> = ({
   closeOnSuccess,
 }) => {
   const [status, setStatus] = useState<"pending" | "success">("pending");
-  const flowNetwork = process.env.NEXT_PUBLIC_FLOW_NETWORK as FlowNetwork;
-  const explorerUrl = txId
-    ? `${BLOCK_EXPLORER_URL[flowNetwork]}/tx/${txId}`
-    : undefined;
 
   useEffect(() => {
     if (open) {
@@ -80,17 +70,7 @@ export const TransactionDialog: React.FC<TransactionDialogProps> = ({
               : successDescription || "Your transaction was successful!"}
           </DialogDescription>
         </DialogHeader>
-        {status === "success" && explorerUrl && (
-          <Button
-            asChild
-            variant="link"
-            className="mt-2 flex items-center gap-1"
-          >
-            <a href={explorerUrl} target="_blank" rel="noopener noreferrer">
-              View on Block Explorer <ExternalLink size={16} />
-            </a>
-          </Button>
-        )}
+        {status === "success" && txId && <TransactionLink txId={txId} />}
         <Button
           variant="outline"
           onClick={() => onOpenChange(false)}
