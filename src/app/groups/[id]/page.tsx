@@ -157,7 +157,7 @@ export default function GroupDetailPage() {
     description: string,
     amount: number,
     splitType: "equal" | "custom" | "random",
-    memberAmounts: { member: string; amount: number }[]
+    memberAmounts: { member: string; amount: number }[],
   ) => {
     addExpense({
       groupId: id,
@@ -211,7 +211,7 @@ export default function GroupDetailPage() {
             />
           ),
         };
-      })
+      }),
     ) || [];
 
   const paymentFeedItems =
@@ -329,46 +329,49 @@ export default function GroupDetailPage() {
           </CardContent>
         </Card>
 
-        {/* You are owed */}
+        {/* Balance Card */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center">
-              <Wallet className="mr-2 h-5 w-5" />
-              You are owed
+              {Number(amountYouOwe || 0) > 0 ? (
+                <CreditCard className="mr-2 h-5 w-5" />
+              ) : Number(amountYouOwe || 0) < 0 ? (
+                <Wallet className="mr-2 h-5 w-5" />
+              ) : (
+                <PartyPopper className="mr-2 h-5 w-5" />
+              )}
+              {Number(amountYouOwe || 0) > 0
+                ? "You owe"
+                : Number(amountYouOwe || 0) < 0
+                  ? "You are owed"
+                  : "All settled up"}
             </CardTitle>
-            <CardDescription>Money others need to pay you</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">${amountOwedToYou.toFixed(2)}</p>
-          </CardContent>
-        </Card>
-
-        {/* You owe */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center">
-              <CreditCard className="mr-2 h-5 w-5" />
-              You owe
-            </CardTitle>
-            <CardDescription>Money you need to pay others</CardDescription>
+            <CardDescription>
+              {Number(amountYouOwe || 0) > 0
+                ? "Money you need to pay others"
+                : Number(amountYouOwe || 0) < 0
+                  ? "Money others need to pay you"
+                  : "No outstanding balances"}
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <p className="text-2xl font-bold">
-                ${Number(amountYouOwe || 0).toFixed(2)}
+                ${Math.abs(Number(amountYouOwe || 0)).toFixed(2)}
               </p>
-              {Number(amountYouOwe || 0) <= 0 && (
+              {Number(amountYouOwe || 0) === 0 && (
                 <PartyPopper className="h-5 w-5 text-primary animate-bounce" />
               )}
             </div>
-            <Button
-              onClick={() => setIsPaymentAmountDialogOpen(true)}
-              variant="default"
-              className="ml-2"
-              disabled={Number(amountYouOwe || 0) <= 0}
-            >
-              Pay people back
-            </Button>
+            {Number(amountYouOwe || 0) > 0 && (
+              <Button
+                onClick={() => setIsPaymentAmountDialogOpen(true)}
+                variant="default"
+                className="ml-2"
+              >
+                Pay people back
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
