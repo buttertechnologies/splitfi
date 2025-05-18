@@ -23,7 +23,7 @@ export default function GroupsPage() {
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
   const [txId, setTxId] = useState<string>();
   const address = useCurrentFlowUser().user.addr;
-  const { data: groups, isLoading, error } = useUserGroups(address);
+  const { data: groups, isLoading, error, refetch } = useUserGroups(address);
   const { createGroupAsync, isPending, error: createError } = useCreateGroup();
 
   const handleCreateGroup = async (groupName: string, members: string[]) => {
@@ -39,6 +39,10 @@ export default function GroupsPage() {
     } catch (err) {
       console.error("Failed to create group:", err);
     }
+  };
+
+  const handleTransactionSuccess = () => {
+    refetch();
   };
 
   if (isLoading)
@@ -104,6 +108,7 @@ export default function GroupsPage() {
         pendingDescription="Your group is being created. Please wait..."
         successTitle="Group Created!"
         successDescription="Your group has been successfully created."
+        onSuccess={handleTransactionSuccess}
       />
     </div>
   );
