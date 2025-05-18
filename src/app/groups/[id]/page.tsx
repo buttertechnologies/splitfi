@@ -136,12 +136,17 @@ export default function GroupDetailPage() {
   const [randomPayer, setRandomPayer] = useState<string | null>(null);
   const [showOnlyUserExpenses, setShowOnlyUserExpenses] = useState(false);
 
-  const { data: group } = useGroup({ id });
-  const { data: amountYouOwe } = useUserBalanceByGroupId({
+  const { data: group, refetch: refetchGroup } = useGroup({ id });
+  const { data: amountYouOwe, refetch: refetchBalance } = useUserBalanceByGroupId({
     address: user.addr,
     groupId: id,
   });
   const { addExpenseAsync } = useAddExpense();
+
+  const handleTransactionSuccess = () => {
+    refetchGroup();
+    refetchBalance();
+  };
 
   // Dummy data for money owed/owing
 
@@ -477,6 +482,7 @@ export default function GroupDetailPage() {
         pendingDescription="Your expense is being added to the group. Please wait..."
         successTitle="Expense Added!"
         successDescription="Your expense has been successfully added to the group."
+        onSuccess={handleTransactionSuccess}
       />
 
       <MembersList
