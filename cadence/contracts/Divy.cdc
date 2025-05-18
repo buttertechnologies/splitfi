@@ -16,6 +16,11 @@ contract Divy {
     access(all) entitlement Member
     access(all) entitlement Invitee
 
+    access(all) event GroupCreated(
+        groupUuid: UInt64,
+        name: String,
+    )
+
     init() {
         self.MembershipCollectionPublicPath = /public/divyMembershipCollection
         self.MembershipCollectionStoragePath = /storage/divyMembershipCollection
@@ -632,6 +637,12 @@ contract Divy {
         self.account.storage.save(
             <- group,
             to: self.deriveGroupStoragePath(groupId: uuid)
+        )
+
+        // Emit the group created event
+        emit GroupCreated(
+            groupUuid: uuid,
+            name: name,
         )
 
         // Issue an administrator capability to the group
