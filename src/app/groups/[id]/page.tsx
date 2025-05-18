@@ -49,6 +49,7 @@ import { useCurrentFlowUser } from "@onflow/kit";
 import { TotalExpensesCard } from "@/components/group/TotalExpensesCard";
 import { AlgorithmCard } from "@/components/group/AlgorithmCard";
 import { BalanceCard } from "@/components/group/BalanceCard";
+import { TransactionLink } from "@/components/TransactionLink";
 
 interface Member {
   address: string;
@@ -143,7 +144,7 @@ export default function GroupDetailPage() {
   });
   const { addExpenseAsync } = useAddExpense();
 
-  const handleTransactionSuccess = () => {
+  const refetchAllData = () => {
     refetchGroup();
     refetchBalance();
   };
@@ -430,6 +431,7 @@ export default function GroupDetailPage() {
               expense.
             </DialogDescription>
           </DialogHeader>
+          {currentTxId && <TransactionLink txId={currentTxId} />}
           <div className="flex flex-col items-center justify-center py-6">
             {randomPayer ? null : (
               <>
@@ -453,6 +455,7 @@ export default function GroupDetailPage() {
                   members[Math.floor(Math.random() * members.length)];
                 setRandomPayer(picked.address);
                 setShowRevealButton(false);
+                refetchAllData();
               }}
               className="mt-4"
             >
@@ -466,6 +469,7 @@ export default function GroupDetailPage() {
               <p className="text-xl font-mono text-primary mb-6">
                 {randomPayer.slice(0, 6)}...{randomPayer.slice(-4)}
               </p>
+              {currentTxId && <TransactionLink txId={currentTxId} />}
               <Button onClick={() => setIsRandomPayerDialogOpen(false)}>
                 Done
               </Button>
@@ -482,7 +486,7 @@ export default function GroupDetailPage() {
         pendingDescription="Your expense is being added to the group. Please wait..."
         successTitle="Expense Added!"
         successDescription="Your expense has been successfully added to the group."
-        onSuccess={handleTransactionSuccess}
+        onSuccess={refetchAllData}
       />
 
       <MembersList
