@@ -143,7 +143,7 @@ export default function GroupDetailPage() {
   });
   const { addExpenseAsync } = useAddExpense();
 
-  const handleTransactionSuccess = () => {
+  const refetchAllData = () => {
     refetchGroup();
     refetchBalance();
   };
@@ -453,6 +453,7 @@ export default function GroupDetailPage() {
                   members[Math.floor(Math.random() * members.length)];
                 setRandomPayer(picked.address);
                 setShowRevealButton(false);
+                refetchAllData();
               }}
               className="mt-4"
             >
@@ -482,7 +483,7 @@ export default function GroupDetailPage() {
         pendingDescription="Your expense is being added to the group. Please wait..."
         successTitle="Expense Added!"
         successDescription="Your expense has been successfully added to the group."
-        onSuccess={handleTransactionSuccess}
+        onSuccess={refetchAllData}
       />
 
       <MembersList
