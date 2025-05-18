@@ -5,10 +5,9 @@ import "Divy"
  */
 transaction(
     groupId: UInt64,
-    amount: UFix64,
+    debtAllocation: {Divy.DebtAllocation},
     description: String,
     timestamp: UFix64,
-    debtors: {Address: UFix64},
 ) {
     var membershipRef: auth(Divy.Owner) &Divy.Membership?
 
@@ -24,10 +23,9 @@ transaction(
     execute {
         self.membershipRef!.addExpense(
             expense: Divy.MemberExpense(
-                amount: amount,
+                debtAllocation: debtAllocation,
                 description: description,
                 timestamp: timestamp,
-                debtors: debtors
             )
         )
     }

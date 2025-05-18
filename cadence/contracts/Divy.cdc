@@ -155,7 +155,7 @@ contract Divy {
                 let memberRef = member.borrow()
                     ?? panic("Member not found for address ".concat(member.collectionCapability.address.toString()))
                 for expense in memberRef.expenses {
-                    total = total + expense.amount
+                    total = total + expense.debtAllocation.total()
                 }
             }
             return total
@@ -167,8 +167,34 @@ contract Divy {
         access(all) fun getMemberBalance(address: Address): Fix64 {
             let member = self.members[address]!.borrow()
                 ?? panic("Member not found for address ".concat(address.toString()))
+
+            log("total paid")
+            log(member.getTotalPaid())
+            log("total owed")
+            log(self.getPrincipalOwing(address: address))
             
-            return Fix64(member.getTotalPaid()) - self.getPrincipalOwing(address: address)
+            return Fix64(member.getTotalPaid()) - self.getPrincipalOwing(address: address) - Fix64(self.getTotalRepaidToMember(address: address))
+        }
+
+        access(all) fun getTotalRepaidToMember(
+            address: Address,
+        ): UFix64 {
+            var totalRepaid: UFix64 = 0.0
+            for memberAddress in self.members.keys {
+                let member = self.borrowMembership(address: memberAddress)
+                if member.owner!.address == address {
+                    continue
+                }
+                for payment in member.payments {
+                    for recipient in payment.recipients.keys {
+                        if recipient == address {
+                            totalRepaid = totalRepaid + payment.recipients[recipient]!
+                        }
+                    }
+                }
+            }
+
+            return totalRepaid
         }
 
         /**
@@ -183,9 +209,9 @@ contract Divy {
                     continue
                 }
                 for expense in memberRef.expenses {
-                    for debtor in expense.debtors.keys {
+                    for debtor in expense.debtAllocation.getDebtors() {
                         if debtor == address {
-                            totalOwing = totalOwing + (Fix64(expense.debtors[debtor]!) * Fix64(expense.amount))
+                            totalOwing = totalOwing + Fix64(expense.debtAllocation.shareOf(member: debtor))
                         }
                     }
                 }
@@ -308,44 +334,93 @@ contract Divy {
             return cap
         }
     }
+    
+    /**
+     * The `DebtAllocation` interface is used to represent the allocation of debt for a given expense.
+     * It contains the amount of the expense and a list of members who are responsible for it.
+     */
+    access(all) struct interface DebtAllocation {
+        /**
+         * Return the share of the expense for a given member.
+         */
+        access(all) fun shareOf(member: Address): UFix64
+        /**
+         * Return the list of participants in the expense.
+         */
+        access(all) fun getDebtors(): &[Address]
+        /**
+         * Return the total amount of the expense including the share of the owner.
+         */
+        access(all) fun total(): UFix64
+    }
 
+    /**
+     * The `FixedDebtAllocation` resource is used to represent a fixed allocation of debt for a given expense.
+     * It contains the amount of the expense and a list of members who are responsible for it.
+     */
+    access(all) struct FixedDebtAllocation: DebtAllocation {
+        access(all) let amount: UFix64
+        access(all) let debtors: {Address: UFix64}
+
+        init(amount: UFix64, debtors: {Address: UFix64}) {
+            // TODO Validate that the sum of the debtors is equal to the amount
+            self.amount = amount
+            self.debtors = debtors
+        }
+
+        access(all) fun shareOf(member: Address): UFix64 {
+            return self.debtors[member]!
+        }
+
+        access(all) fun getDebtors(): &[Address] {
+            return &self.debtors.keys
+        }
+
+        access(all) fun total(): UFix64 {
+            return self.amount
+        }
+    }
+
+    /**
+     * The `PercentageDebtAllocation` resource is used to represent a percentage allocation of debt for a given expense.
+     */
+    access(all) struct PercentageDebtAllocation: DebtAllocation {
+        access(all) let amount: UFix64
+        access(all) let debtors: {Address: UFix64}
+
+        init(amount: UFix64, debtors: {Address: UFix64}) {
+            self.amount = amount
+            self.debtors = debtors
+        }
+
+        access(all) fun shareOf(member: Address): UFix64 {
+            return self.debtors[member]! * self.amount
+        }
+
+        access(all) fun getDebtors(): &[Address] {
+            return &self.debtors.keys
+        }
+
+        access(all) fun total(): UFix64 {
+            return self.amount
+        }
+    }
 
     /**
      * The `MemberExpense` resource is used to represent incurred by a member of a group.
      */
     access(all) struct MemberExpense {
-        // The amount of the expense in USD
-        access(all) var amount: UFix64
+        // Map of debtors to the fraction of the expense they owe
+        access(all) var debtAllocation: {DebtAllocation}
         // Description of the expense
         access(all) var description: String
         // Timestamp of when expense was incurred in seconds since the epoch (UTC)
         access(all) var timestamp: UFix64
-        // Map of debtors to the fraction of the expense they owe
-        access(all) var debtors: {Address: UFix64}
 
-        init(amount: UFix64, description: String, timestamp: UFix64, debtors: {Address: UFix64}) {
-            self.amount = amount
+        init(debtAllocation: {DebtAllocation}, description: String, timestamp: UFix64) {
+            self.debtAllocation = debtAllocation
             self.timestamp = timestamp
             self.description = description
-            self.debtors = debtors
-        }
-
-        // TODO: IS THIS SAFE IF SOMEONE CAN GET A REFERNCE?
-
-        access(all) fun setDebtors(debtors: {Address: UFix64}) {
-            self.debtors = debtors
-        }
-
-        access(all) fun setAmount(amount: UFix64) {
-            self.amount = amount
-        }
-
-        access(all) fun setDescription(description: String) {
-            self.description = description
-        }
-
-        access(all) fun setTimestamp(timestamp: UFix64) {
-            self.timestamp = timestamp
         }
     }
 
@@ -403,7 +478,7 @@ contract Divy {
         // We need a holder vault for any that can't be distributed
         access(all) fun makePayment(
             vaultRef: auth(FungibleToken.Withdraw) &EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.Vault,
-            address: Address
+            maxAmount: UFix64
         ) {
             let group = self.borrowGroup()
 
@@ -422,14 +497,19 @@ contract Divy {
                     break
                 }
 
-                if peerAddress == address {
+                if group.members[peerAddress]!.collectionCapability.address != peerAddress {
                     continue
                 }
 
                 let signedBalance = group.getMemberBalance(address: peerAddress)
+
+                log("4")
+                log(signedBalance)
                 if signedBalance <= 0.0 {
                     continue
                 }
+
+                log("Member balance")
 
                 let balance = UFix64(signedBalance)
                 let paymentAmount = balance > vaultRef.balance ? vaultRef.balance : balance
@@ -475,8 +555,11 @@ contract Divy {
             }
 
             for expense in (&self.expenses as &[MemberExpense]) {
-                for debtor in expense.debtors.keys {
-                    total = total + (expense.debtors[debtor]! * expense.amount)
+                for debtor in expense.debtAllocation.getDebtors() {
+                    if debtor == self.owner!.address {
+                        continue
+                    }
+                    total = total + expense.debtAllocation.shareOf(member: debtor)
                 }
             }
             return total

@@ -6,16 +6,16 @@ import "EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed"
 /**
  * Make a payment to a member's debt.
  */
-transaction() {
-    let memberRef: &Divy.Membership
+transaction(groupId: UInt64, maxAmount: UFix64) {
+    let memberRef: auth(Divy.Owner) &Divy.Membership
     let vaultRef: auth(FungibleToken.Withdraw) &EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.Vault
     let address: Address
 
     prepare(acct: auth(Storage) &Account) {
-        let membershipCollection = acct.storage.borrow<&Divy.MembershipCollection>(from: Divy.MembershipCollectionStoragePath)
+        let membershipCollection = acct.storage.borrow<auth(Divy.Owner) &Divy.MembershipCollection>(from: Divy.MembershipCollectionStoragePath)
             ?? panic("Membership collection not found")
 
-        self.memberRef = membershipCollection.borrowOwnerByGroupId(groupId: 0)
+        self.memberRef = membershipCollection.borrowOwnerByGroupId(groupId: groupId)
             ?? panic("Membership not found")
 
         let vaultData = EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.resolveContractView(
@@ -32,6 +32,6 @@ transaction() {
     }
 
     execute {
-        self.memberRef.makePayment(vaultRef: self.vaultRef, address: self.address)
+        self.memberRef.makePayment(vaultRef: self.vaultRef, maxAmount: maxAmount)
     }
 }

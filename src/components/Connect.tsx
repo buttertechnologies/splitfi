@@ -22,7 +22,7 @@ export function Connect({
   onDisconnect?: () => void;
 }) {
   const { user, authenticate, unauthenticate } = useCurrentFlowUser();
-  const { data: balance } = useUsdfBalance(user.addr);
+  const { data: balance } = useUsdfBalance({ address: user.addr });
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 

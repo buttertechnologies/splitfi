@@ -25,6 +25,12 @@
         "mainnet": "1e4aa0b87d10b141",
         "testnet": "dfc20aee650fcbdf"
       }
+    },
+    "FCL": {
+      "source": "cadence/mocks/FCL.cdc",
+      "aliases": {
+        "testing": "000000000000000b"
+      }
     }
   },
   "dependencies": {

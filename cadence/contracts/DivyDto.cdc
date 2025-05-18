@@ -5,16 +5,30 @@ import "Divy"
  */
 access(all) contract DivyDto {
     access(all) struct MemberExpenseDto {
-        access(all) let description: String
         access(all) let amount: UFix64
+        access(all) let description: String
         access(all) let timestamp: UFix64
         access(all) let debtors: {Address: UFix64}
 
         init(expense: &Divy.MemberExpense) {
             self.description = expense.description
-            self.amount = expense.amount
+            self.amount = expense.debtAllocation.total()
             self.timestamp = expense.timestamp
-            self.debtors = *expense.debtors
+            self.debtors = {}
+            for debtor in expense.debtAllocation.getDebtors() {
+                let amountOwed = expense.debtAllocation.shareOf(member: debtor)
+                self.debtors[debtor] = amountOwed
+            }
+        }
+    }
+
+    access(all) struct PaymentInfoDto {
+        access(all) let recipients: {Address: UFix64}
+        access(all) let timestamp: UFix64
+
+        init(payment: &Divy.PaymentInfo) {
+            self.recipients = *payment.recipients
+            self.timestamp = payment.timestamp
         }
     }
 
@@ -22,6 +36,7 @@ access(all) contract DivyDto {
         access(all) let uuid: UInt64
         access(all) let address: Address
         access(all) let expenses: [MemberExpenseDto]
+        access(all) let payments: [PaymentInfoDto]
 
         init(memberRef: &Divy.Membership) {
             self.uuid = memberRef.uuid
@@ -33,6 +48,13 @@ access(all) contract DivyDto {
                 expenses.append(expenseDto)
             }
             self.expenses = expenses
+
+            let payments: [PaymentInfoDto] = []
+            for payment in memberRef.payments {
+                let paymentDto = PaymentInfoDto(payment: payment)
+                payments.append(paymentDto)
+            }
+            self.payments = payments
         }
     }
 
