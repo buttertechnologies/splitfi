@@ -16,9 +16,12 @@ import { GroupCard } from "@/components/GroupCard";
 import { useUserGroups } from "@/hooks/useUserGroups";
 import { useCreateGroup } from "@/hooks/useCreateGroup";
 import { Users } from "lucide-react";
+import { TransactionDialog } from "@/components/TransactionDialog";
 
 export default function GroupsPage() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
+  const [txId, setTxId] = useState<string>();
   const address = useCurrentFlowUser().user.addr;
   const { data: groups, isLoading, error } = useUserGroups(address);
   const { createGroupAsync, isPending, error: createError } = useCreateGroup();
@@ -30,8 +33,9 @@ export default function GroupsPage() {
         invitees: members,
       });
 
-      console.log("Transaction ID:", txId);
+      setTxId(txId);
       setIsOpen(false);
+      setIsTransactionDialogOpen(true);
     } catch (err) {
       console.error("Failed to create group:", err);
     }
@@ -91,6 +95,16 @@ export default function GroupsPage() {
           groups?.map((group, index) => <GroupCard key={index} group={group} />)
         )}
       </div>
+
+      <TransactionDialog
+        open={isTransactionDialogOpen}
+        onOpenChange={setIsTransactionDialogOpen}
+        txId={txId}
+        pendingTitle="Creating Group"
+        pendingDescription="Your group is being created. Please wait..."
+        successTitle="Group Created!"
+        successDescription="Your group has been successfully created."
+      />
     </div>
   );
 }
