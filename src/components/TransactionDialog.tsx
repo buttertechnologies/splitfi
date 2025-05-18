@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, CheckCircle2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FlowNetwork } from "@onflow/kit";
 
 interface TransactionDialogProps {
   open: boolean;
@@ -22,6 +23,12 @@ interface TransactionDialogProps {
   closeOnSuccess?: boolean;
 }
 
+const BLOCK_EXPLORER_URL = {
+  mainnet: "https://flowscan.io",
+  testnet: "https://testnet.flowscan.org",
+  emulator: "https://testnet.flowscan.org",
+};
+
 export const TransactionDialog: React.FC<TransactionDialogProps> = ({
   open,
   onOpenChange,
@@ -34,16 +41,17 @@ export const TransactionDialog: React.FC<TransactionDialogProps> = ({
   successDescription,
   closeOnSuccess,
 }) => {
-  const [status, setStatus] = useState<'pending' | 'success'>('pending');
+  const [status, setStatus] = useState<"pending" | "success">("pending");
+  const flowNetwork = process.env.NEXT_PUBLIC_FLOW_NETWORK as FlowNetwork;
   const explorerUrl = txId
-    ? `https://testnet.flowscan.org/transaction/${txId}`
+    ? `${BLOCK_EXPLORER_URL[flowNetwork]}/tx/${txId}`
     : undefined;
 
   useEffect(() => {
     if (open) {
-      setStatus('pending');
+      setStatus("pending");
       const timer = setTimeout(() => {
-        setStatus('success');
+        setStatus("success");
         if (onSuccess) onSuccess();
         if (closeOnSuccess) onOpenChange(false);
       }, timeoutMs);
@@ -67,7 +75,8 @@ export const TransactionDialog: React.FC<TransactionDialogProps> = ({
           </DialogTitle>
           <DialogDescription className="text-center mt-2">
             {status === "pending"
-              ? pendingDescription || "Your transaction is being processed. Please wait..."
+              ? pendingDescription ||
+                "Your transaction is being processed. Please wait..."
               : successDescription || "Your transaction was successful!"}
           </DialogDescription>
         </DialogHeader>
@@ -77,11 +86,7 @@ export const TransactionDialog: React.FC<TransactionDialogProps> = ({
             variant="link"
             className="mt-2 flex items-center gap-1"
           >
-            <a
-              href={explorerUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={explorerUrl} target="_blank" rel="noopener noreferrer">
               View on Block Explorer <ExternalLink size={16} />
             </a>
           </Button>
@@ -96,4 +101,4 @@ export const TransactionDialog: React.FC<TransactionDialogProps> = ({
       </DialogContent>
     </Dialog>
   );
-}; 
+};
