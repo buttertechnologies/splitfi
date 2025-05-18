@@ -126,6 +126,7 @@ export default function GroupDetailPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
+  const [currentTxId, setCurrentTxId] = useState<string>();
   const [isPaymentAmountDialogOpen, setIsPaymentAmountDialogOpen] =
     useState(false);
   const [isMembersListOpen, setIsMembersListOpen] = useState(false);
@@ -135,12 +136,17 @@ export default function GroupDetailPage() {
   const [randomPayer, setRandomPayer] = useState<string | null>(null);
   const [showOnlyUserExpenses, setShowOnlyUserExpenses] = useState(false);
 
-  const { data: group } = useGroup({ id });
-  const { data: amountYouOwe } = useUserBalanceByGroupId({
+  const { data: group, refetch: refetchGroup } = useGroup({ id });
+  const { data: amountYouOwe, refetch: refetchBalance } = useUserBalanceByGroupId({
     address: user.addr,
     groupId: id,
   });
-  const { addExpense } = useAddExpense();
+  const { addExpenseAsync } = useAddExpense();
+
+  const handleTransactionSuccess = () => {
+    refetchGroup();
+    refetchBalance();
+  };
 
   // Dummy data for money owed/owing
 
@@ -156,32 +162,38 @@ export default function GroupDetailPage() {
     setIsEditDialogOpen(false);
   };
 
-  const handleAddExpense = (
+  const handleAddExpense = async (
     description: string,
     amount: number,
     splitType: "equal" | "custom" | "random",
     memberAmounts: { member: string; amount: number }[],
   ) => {
-    addExpense({
-      groupId: id,
-      amount,
-      description,
-      timestamp: new Date(),
-      debtors: memberAmounts.map(({ member, amount }) => ({
-        address: member,
-        fraction: amount,
-      })),
-    });
-    setIsAddExpenseDialogOpen(false);
-    if (splitType === "random") {
-      setIsRandomPayerDialogOpen(true);
-      setShowRevealButton(false);
-      setRandomPayer(null);
-      setTimeout(() => {
-        setShowRevealButton(true);
-      }, 2500); // 2.5 seconds
-    } else {
-      setIsTransactionDialogOpen(true);
+    try {
+      const txId = await addExpenseAsync({
+        groupId: id,
+        amount,
+        description,
+        timestamp: new Date(),
+        debtors: memberAmounts.map(({ member, amount }) => ({
+          address: member,
+          fraction: amount,
+        })),
+      });
+
+      setCurrentTxId(txId);
+      setIsAddExpenseDialogOpen(false);
+      if (splitType === "random") {
+        setIsRandomPayerDialogOpen(true);
+        setShowRevealButton(false);
+        setRandomPayer(null);
+        setTimeout(() => {
+          setShowRevealButton(true);
+        }, 2500); // 2.5 seconds
+      } else {
+        setIsTransactionDialogOpen(true);
+      }
+    } catch (err) {
+      console.error("Failed to add expense:", err);
     }
   };
 
@@ -465,7 +477,12 @@ export default function GroupDetailPage() {
       <TransactionDialog
         open={isTransactionDialogOpen}
         onOpenChange={setIsTransactionDialogOpen}
-        txId="0x1234567890abcdef"
+        txId={currentTxId}
+        pendingTitle="Adding Expense"
+        pendingDescription="Your expense is being added to the group. Please wait..."
+        successTitle="Expense Added!"
+        successDescription="Your expense has been successfully added to the group."
+        onSuccess={handleTransactionSuccess}
       />
 
       <MembersList
