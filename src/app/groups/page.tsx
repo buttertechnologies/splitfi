@@ -21,15 +21,20 @@ export default function GroupsPage() {
   const [isOpen, setIsOpen] = useState(false);
   const address = useCurrentFlowUser().user.addr;
   const { data: groups, isLoading, error } = useUserGroups(address);
-  const { data: createGroupResult, createGroup } = useCreateGroup()
+  const { createGroupAsync, isPending, error: createError } = useCreateGroup();
 
-  const handleCreateGroup = (groupName: string, members: string[]) => {
-    console.log("Creating group:", { groupName, members });
-    createGroup({
-      name: groupName,
-      invitees: members,
-    })
-    setIsOpen(false);
+  const handleCreateGroup = async (groupName: string, members: string[]) => {
+    try {
+      const txId = await createGroupAsync({
+        name: groupName,
+        invitees: members,
+      });
+
+      console.log("Transaction ID:", txId);
+      setIsOpen(false);
+    } catch (err) {
+      console.error("Failed to create group:", err);
+    }
   };
 
   if (isLoading)
@@ -74,14 +79,16 @@ export default function GroupsPage() {
             <div className="rounded-full bg-gray-100 p-6 mb-4">
               <Users className="w-12 h-12 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No groups yet</h3>
-            <p className="text-gray-500 mb-6">Create your first group to start splitting expenses with friends.</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              No groups yet
+            </h3>
+            <p className="text-gray-500 mb-6">
+              Create your first group to start splitting expenses with friends.
+            </p>
             <Button onClick={() => setIsOpen(true)}>Create Group</Button>
           </div>
         ) : (
-          groups?.map((group, index) => (
-            <GroupCard key={index} group={group} />
-          ))
+          groups?.map((group, index) => <GroupCard key={index} group={group} />)
         )}
       </div>
     </div>
