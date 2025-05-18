@@ -51,6 +51,7 @@ import { useMakePayment } from "@/hooks/useMakePayment";
 import { TotalExpensesCard } from "@/components/group/TotalExpensesCard";
 import { AlgorithmCard } from "@/components/group/AlgorithmCard";
 import { BalanceCard } from "@/components/group/BalanceCard";
+import { TransactionLink } from "@/components/TransactionLink";
 
 interface Member {
   address: string;
@@ -87,6 +88,7 @@ export default function GroupDetailPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
+  const [currentTxId, setCurrentTxId] = useState<string>();
   const [isPaymentAmountDialogOpen, setIsPaymentAmountDialogOpen] =
     useState(false);
   const [isMembersListOpen, setIsMembersListOpen] = useState(false);
@@ -96,17 +98,23 @@ export default function GroupDetailPage() {
   const [randomPayer, setRandomPayer] = useState<string | null>(null);
   const [showOnlyUserExpenses, setShowOnlyUserExpenses] = useState(false);
 
-  const { data: group } = useGroup({ id });
-  const { data: userGroupBalance } = useUserBalanceByGroupId({
-    address: user.addr,
-    groupId: id,
-  });
+  const { data: group, refetch: refetchGroup } = useGroup({ id });
+  const { data: userGroupBalance, refetch: refetchBalance } =
+    useUserBalanceByGroupId({
+      address: user.addr,
+      groupId: id,
+    });
   const amountYouOwe = -Number(userGroupBalance);
-  const { addExpense } = useAddExpense();
   const { data: usdfBalance } = useUsdfBalance({
     address: user.addr,
   });
   const { makePayment } = useMakePayment();
+  const { addExpenseAsync } = useAddExpense();
+
+  const refetchAllData = () => {
+    refetchGroup();
+    refetchBalance();
+  };
 
   // Dummy data for money owed/owing
 
@@ -122,33 +130,39 @@ export default function GroupDetailPage() {
     setIsEditDialogOpen(false);
   };
 
-  const handleAddExpense = (
+  const handleAddExpense = async (
     description: string,
     amount: number,
     splitType: "equal" | "custom" | "random",
     memberAmounts: { member: string; amount: number }[]
   ) => {
-    addExpense({
-      type: "fixed",
-      groupId: id,
-      amount,
-      description,
-      timestamp: new Date(),
-      debtors: memberAmounts.map(({ member, amount }) => ({
-        address: member,
+    try {
+      const txId = await addExpenseAsync({
+        type: "fixed",
+        groupId: id,
         amount,
-      })),
-    });
-    setIsAddExpenseDialogOpen(false);
-    if (splitType === "random") {
-      setIsRandomPayerDialogOpen(true);
-      setShowRevealButton(false);
-      setRandomPayer(null);
-      setTimeout(() => {
-        setShowRevealButton(true);
-      }, 2500); // 2.5 seconds
-    } else {
-      setIsTransactionDialogOpen(true);
+        description,
+        timestamp: new Date(),
+        debtors: memberAmounts.map(({ member, amount }) => ({
+          address: member,
+          amount,
+        })),
+      });
+
+      setCurrentTxId(txId);
+      setIsAddExpenseDialogOpen(false);
+      if (splitType === "random") {
+        setIsRandomPayerDialogOpen(true);
+        setShowRevealButton(false);
+        setRandomPayer(null);
+        setTimeout(() => {
+          setShowRevealButton(true);
+        }, 2500); // 2.5 seconds
+      } else {
+        setIsTransactionDialogOpen(true);
+      }
+    } catch (err) {
+      console.error("Failed to add expense:", err);
     }
   };
 
@@ -409,6 +423,7 @@ export default function GroupDetailPage() {
               expense.
             </DialogDescription>
           </DialogHeader>
+          {currentTxId && <TransactionLink txId={currentTxId} />}
           <div className="flex flex-col items-center justify-center py-6">
             {randomPayer ? null : (
               <>
@@ -433,6 +448,7 @@ export default function GroupDetailPage() {
                   members[Math.floor(Math.random() * members.length)];
                 setRandomPayer(picked.address);
                 setShowRevealButton(false);
+                refetchAllData();
               }}
               className="mt-4"
             >
@@ -446,6 +462,7 @@ export default function GroupDetailPage() {
               <p className="text-xl font-mono text-primary mb-6">
                 {randomPayer.slice(0, 6)}...{randomPayer.slice(-4)}
               </p>
+              {currentTxId && <TransactionLink txId={currentTxId} />}
               <Button onClick={() => setIsRandomPayerDialogOpen(false)}>
                 Done
               </Button>
@@ -457,7 +474,12 @@ export default function GroupDetailPage() {
       <TransactionDialog
         open={isTransactionDialogOpen}
         onOpenChange={setIsTransactionDialogOpen}
-        txId="0x1234567890abcdef"
+        txId={currentTxId}
+        pendingTitle="Adding Expense"
+        pendingDescription="Your expense is being added to the group. Please wait..."
+        successTitle="Expense Added!"
+        successDescription="Your expense has been successfully added to the group."
+        onSuccess={refetchAllData}
       />
 
       <MembersList
