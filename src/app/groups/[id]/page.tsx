@@ -48,6 +48,9 @@ import { useUserBalanceByGroupId } from "@/hooks/useUserBalanceByGroupId";
 import { useCurrentFlowUser } from "@onflow/kit";
 import { useUsdfBalance } from "@/hooks/useUsdfBalance";
 import { useMakePayment } from "@/hooks/useMakePayment";
+import { TotalExpensesCard } from "@/components/group/TotalExpensesCard";
+import { AlgorithmCard } from "@/components/group/AlgorithmCard";
+import { BalanceCard } from "@/components/group/BalanceCard";
 
 interface Member {
   address: string;
@@ -292,64 +295,14 @@ export default function GroupDetailPage() {
 
       {/* Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-        {/* Total Group Expenses */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center">
-              <Receipt className="mr-2 h-5 w-5" />
-              Total Group Expenses
-            </CardTitle>
-            <CardDescription>All expenses in this group</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              ${totalGroupExpenses?.toFixed(2) || "0.00"}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* You are owed */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center">
-              <Wallet className="mr-2 h-5 w-5" />
-              You are owed
-            </CardTitle>
-            <CardDescription>Money others need to pay you</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">${amountOwedToYou.toFixed(2)}</p>
-          </CardContent>
-        </Card>
-
-        {/* You owe */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center">
-              <CreditCard className="mr-2 h-5 w-5" />
-              You owe
-            </CardTitle>
-            <CardDescription>Money you need to pay others</CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <p className="text-2xl font-bold">
-                ${Number(amountYouOwe || 0).toFixed(2)}
-              </p>
-              {Number(amountYouOwe || 0) <= 0 && (
-                <PartyPopper className="h-5 w-5 text-primary animate-bounce" />
-              )}
-            </div>
-            <Button
-              onClick={() => setIsPaymentAmountDialogOpen(true)}
-              variant="default"
-              className="ml-2"
-              disabled={Number(amountYouOwe || 0) <= 0}
-            >
-              Pay people back
-            </Button>
-          </CardContent>
-        </Card>
+        <TotalExpensesCard
+          totalGroupExpenses={Number(totalGroupExpenses) || 0}
+        />
+        <AlgorithmCard />
+        <BalanceCard
+          amountYouOwe={Number(amountYouOwe || 0)}
+          setIsPaymentAmountDialogOpen={setIsPaymentAmountDialogOpen}
+        />
       </div>
 
       <div className="mt-8">
