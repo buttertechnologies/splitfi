@@ -178,9 +178,9 @@ contract Divy {
                     continue
                 }
                 for expense in memberRef.expenses {
-                    for debtor in expense.debtors.keys {
+                    for debtor in expense.debtAllocation.getDebtors() {
                         if debtor == address {
-                            totalOwing = totalOwing + (Fix64(expense.debtors[debtor]!) * Fix64(expense.amount))
+                            totalOwing = totalOwing + Fix64(expense.debtAllocation.shareOf(member: debtor))
                         }
                     }
                 }
@@ -303,6 +303,76 @@ contract Divy {
             return cap
         }
     }
+    
+    /**
+     * The `DebtAllocation` interface is used to represent the allocation of debt for a given expense.
+     * It contains the amount of the expense and a list of members who are responsible for it.
+     */
+    access(all) struct interface DebtAllocation {
+        /**
+         * Return the share of the expense for a given member.
+         */
+        access(all) fun shareOf(member: Address): UFix64
+        /**
+         * Return the list of participants in the expense.
+         */
+        access(all) fun getDebtors(): &[Address]
+        /**
+         * Return the total amount of the expense including the share of the owner.
+         */
+        access(all) fun total(): UFix64
+    }
+
+    /**
+     * The `FixedDebtAllocation` resource is used to represent a fixed allocation of debt for a given expense.
+     * It contains the amount of the expense and a list of members who are responsible for it.
+     */
+    access(all) struct FixedDebtAllocation: DebtAllocation {
+        access(all) let amount: UFix64
+        access(all) let debtors: {Address: UFix64}
+
+        init(amount: UFix64, debtors: {Address: UFix64}) {
+            self.amount = amount
+            self.debtors = debtors
+        }
+
+        access(all) fun shareOf(member: Address): UFix64 {
+            return self.debtors[member]!
+        }
+
+        access(all) fun getDebtors(): &[Address] {
+            return &self.debtors.keys
+        }
+
+        access(all) fun total(): UFix64 {
+            return self.amount
+        }
+    }
+
+    /**
+     * The `PercentageDebtAllocation` resource is used to represent a percentage allocation of debt for a given expense.
+     */
+    access(all) struct PercentageDebtAllocation: DebtAllocation {
+        access(all) let amount: UFix64
+        access(all) let debtors: {Address: UFix64}
+
+        init(amount: UFix64, debtors: {Address: UFix64}) {
+            self.amount = amount
+            self.debtors = debtors
+        }
+
+        access(all) fun shareOf(member: Address): UFix64 {
+            return self.debtors[member]! * self.amount
+        }
+
+        access(all) fun getDebtors(): &[Address] {
+            return &self.debtors.keys
+        }
+
+        access(all) fun total(): UFix64 {
+            return self.amount
+        }
+    }
 
     /**
      * The `MemberExpense` resource is used to represent incurred by a member of a group.
@@ -315,19 +385,19 @@ contract Divy {
         // Timestamp of when expense was incurred in seconds since the epoch (UTC)
         access(all) var timestamp: UFix64
         // Map of debtors to the fraction of the expense they owe
-        access(all) var debtors: {Address: UFix64}
+        access(all) var debtAllocation: {DebtAllocation}
 
-        init(amount: UFix64, description: String, timestamp: UFix64, debtors: {Address: UFix64}) {
+        init(amount: UFix64, description: String, timestamp: UFix64, debtAllocation: {DebtAllocation}) {
             self.amount = amount
             self.timestamp = timestamp
             self.description = description
-            self.debtors = debtors
+            self.debtAllocation = debtAllocation
         }
 
         // TODO: IS THIS SAFE IF SOMEONE CAN GET A REFERNCE?
 
-        access(all) fun setDebtors(debtors: {Address: UFix64}) {
-            self.debtors = debtors
+        access(all) fun setDebtAllocation(debtAllocation: {DebtAllocation}) {
+            self.debtAllocation = debtAllocation
         }
 
         access(all) fun setAmount(amount: UFix64) {
@@ -469,8 +539,8 @@ contract Divy {
             }
 
             for expense in (&self.expenses as &[MemberExpense]) {
-                for debtor in expense.debtors.keys {
-                    total = total + (expense.debtors[debtor]! * expense.amount)
+                for debtor in expense.debtAllocation.getDebtors() {
+                    total = total + expense.debtAllocation.shareOf(member: debtor)
                 }
             }
             return total
