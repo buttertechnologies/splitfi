@@ -8,6 +8,7 @@ export interface MemberSummary {
   uuid: string;
   address: string;
   expenses: ExpenseSummary[];
+  payments: PaymentInfo[];
 }
 
 export interface ExpenseSummary {
@@ -28,8 +29,5 @@ export interface Invitation {
 
 export interface PaymentInfo {
   timestamp: string;
-  recipients: {
-    address: string;
-    amount: string;
-  }[];
+  recipients: { [address: string]: string };
 }

@@ -5,16 +5,20 @@ import "Divy"
  */
 access(all) contract DivyDto {
     access(all) struct MemberExpenseDto {
-        access(all) let description: String
         access(all) let amount: UFix64
+        access(all) let description: String
         access(all) let timestamp: UFix64
         access(all) let debtors: {Address: UFix64}
 
         init(expense: &Divy.MemberExpense) {
             self.description = expense.description
-            self.amount = expense.amount
+            self.amount = expense.debtAllocation.total()
             self.timestamp = expense.timestamp
-            self.debtors = *expense.debtors
+            self.debtors = {}
+            for debtor in expense.debtAllocation.getDebtors() {
+                let amountOwed = expense.debtAllocation.shareOf(member: debtor)
+                self.debtors[debtor] = amountOwed
+            }
         }
     }
 

@@ -155,7 +155,7 @@ contract Divy {
                 let memberRef = member.borrow()
                     ?? panic("Member not found for address ".concat(member.collectionCapability.address.toString()))
                 for expense in memberRef.expenses {
-                    total = total + expense.amount
+                    total = total + expense.debtAllocation.total()
                 }
             }
             return total
@@ -167,8 +167,34 @@ contract Divy {
         access(all) fun getMemberBalance(address: Address): Fix64 {
             let member = self.members[address]!.borrow()
                 ?? panic("Member not found for address ".concat(address.toString()))
+
+            log("total paid")
+            log(member.getTotalPaid())
+            log("total owed")
+            log(self.getPrincipalOwing(address: address))
             
-            return Fix64(member.getTotalPaid()) - self.getPrincipalOwing(address: address)
+            return Fix64(member.getTotalPaid()) - self.getPrincipalOwing(address: address) - Fix64(self.getTotalRepaidToMember(address: address))
+        }
+
+        access(all) fun getTotalRepaidToMember(
+            address: Address,
+        ): UFix64 {
+            var totalRepaid: UFix64 = 0.0
+            for memberAddress in self.members.keys {
+                let member = self.borrowMembership(address: memberAddress)
+                if member.owner!.address == address {
+                    continue
+                }
+                for payment in member.payments {
+                    for recipient in payment.recipients.keys {
+                        if recipient == address {
+                            totalRepaid = totalRepaid + payment.recipients[recipient]!
+                        }
+                    }
+                }
+            }
+
+            return totalRepaid
         }
 
         /**
@@ -337,6 +363,7 @@ contract Divy {
         access(all) let debtors: {Address: UFix64}
 
         init(amount: UFix64, debtors: {Address: UFix64}) {
+            // TODO Validate that the sum of the debtors is equal to the amount
             self.amount = amount
             self.debtors = debtors
         }
@@ -383,38 +410,17 @@ contract Divy {
      * The `MemberExpense` resource is used to represent incurred by a member of a group.
      */
     access(all) struct MemberExpense {
-        // The amount of the expense in USD
-        access(all) var amount: UFix64
+        // Map of debtors to the fraction of the expense they owe
+        access(all) var debtAllocation: {DebtAllocation}
         // Description of the expense
         access(all) var description: String
         // Timestamp of when expense was incurred in seconds since the epoch (UTC)
         access(all) var timestamp: UFix64
-        // Map of debtors to the fraction of the expense they owe
-        access(all) var debtAllocation: {DebtAllocation}
 
-        init(amount: UFix64, description: String, timestamp: UFix64, debtAllocation: {DebtAllocation}) {
-            self.amount = amount
+        init(debtAllocation: {DebtAllocation}, description: String, timestamp: UFix64) {
+            self.debtAllocation = debtAllocation
             self.timestamp = timestamp
             self.description = description
-            self.debtAllocation = debtAllocation
-        }
-
-        // TODO: IS THIS SAFE IF SOMEONE CAN GET A REFERNCE?
-
-        access(all) fun setDebtAllocation(debtAllocation: {DebtAllocation}) {
-            self.debtAllocation = debtAllocation
-        }
-
-        access(all) fun setAmount(amount: UFix64) {
-            self.amount = amount
-        }
-
-        access(all) fun setDescription(description: String) {
-            self.description = description
-        }
-
-        access(all) fun setTimestamp(timestamp: UFix64) {
-            self.timestamp = timestamp
         }
     }
 
@@ -491,14 +497,19 @@ contract Divy {
                     break
                 }
 
-                if group.members[peerAddress]!.collectionCapability.address == peerAddress {
+                if group.members[peerAddress]!.collectionCapability.address != peerAddress {
                     continue
                 }
 
                 let signedBalance = group.getMemberBalance(address: peerAddress)
+
+                log("4")
+                log(signedBalance)
                 if signedBalance <= 0.0 {
                     continue
                 }
+
+                log("Member balance")
 
                 let balance = UFix64(signedBalance)
                 let paymentAmount = balance > vaultRef.balance ? vaultRef.balance : balance
@@ -545,6 +556,9 @@ contract Divy {
 
             for expense in (&self.expenses as &[MemberExpense]) {
                 for debtor in expense.debtAllocation.getDebtors() {
+                    if debtor == self.owner!.address {
+                        continue
+                    }
                     total = total + expense.debtAllocation.shareOf(member: debtor)
                 }
             }

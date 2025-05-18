@@ -101,14 +101,7 @@ export default function GroupDetailPage() {
     address: user.addr,
     groupId: id,
   });
-  const amountYouOwe =
-    userGroupBalance != null && Number(userGroupBalance) > 0
-      ? -Number(userGroupBalance)
-      : 0;
-  const amountYouAreOwed =
-    userGroupBalance != null && Number(userGroupBalance) < 0
-      ? Number(userGroupBalance)
-      : 0;
+  const amountYouOwe = -Number(userGroupBalance);
   const { addExpense } = useAddExpense();
   const { data: usdfBalance } = useUsdfBalance({
     address: user.addr,
@@ -136,13 +129,14 @@ export default function GroupDetailPage() {
     memberAmounts: { member: string; amount: number }[]
   ) => {
     addExpense({
+      type: "fixed",
       groupId: id,
       amount,
       description,
       timestamp: new Date(),
       debtors: memberAmounts.map(({ member, amount }) => ({
         address: member,
-        fraction: amount,
+        amount,
       })),
     });
     setIsAddExpenseDialogOpen(false);
@@ -197,22 +191,29 @@ export default function GroupDetailPage() {
     ) || [];
 
   const paymentFeedItems =
-    dummyPayments.map((payment) => {
-      const date = new Date(payment.date.getTime());
-      return {
-        date,
-        content: (
-          <PaymentCard
-            key={`payment-${payment.id}`}
-            from={payment.from}
-            to={payment.to}
-            amounts={payment.amounts}
-            date={payment.date}
-            transactionId={payment.transactionId}
-          />
-        ),
-      };
-    }) || [];
+    group?.members
+      .flatMap((x) => x.payments.map((y) => ({ address: x.address, ...y })))
+      .map((payment) => {
+        const date = new Date(Number(payment.timestamp) * 1000);
+        const entries = Object.entries(payment.recipients);
+
+        console.log(entries);
+        return {
+          date,
+          content: (
+            <PaymentCard
+              key={`payment-${payment.timestamp}`}
+              from={payment.address}
+              to={entries.map((x) => x[0])}
+              amounts={entries.map((x) => Number(x[1]))}
+              date={date}
+              transactionId={
+                /*payment.transactionId*/ "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+              }
+            />
+          ),
+        };
+      }) || [];
 
   return (
     <div className="container mx-auto p-8">
