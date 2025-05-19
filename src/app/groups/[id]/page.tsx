@@ -77,6 +77,9 @@ export default function GroupDetailPage() {
   const [randomPayer, setRandomPayer] = useState<string | null>(null);
   const [showOnlyUserExpenses, setShowOnlyUserExpenses] = useState(false);
   const [isRandomExpenseTx, setIsRandomExpenseTx] = useState(false);
+  const [revealTxId, setRevealTxId] = useState<string | null>(null);
+  const { transactionStatus: revealTxStatus } = useFlowTransaction({ id: revealTxId || "" });
+  const [isDiceBouncing, setIsDiceBouncing] = useState(false);
 
   const { data: group, refetch: refetchGroup } = useGroup({ id });
   const { data: userGroupBalance, refetch: refetchBalance } =
@@ -90,7 +93,7 @@ export default function GroupDetailPage() {
   });
   const { makePayment } = useMakePayment();
   const { addExpenseAsync } = useAddExpense();
-  const { revealRandomPayer } = useRevealRandomPayer();
+  const { revealRandomPayer, revealRandomPayerAsync } = useRevealRandomPayer();
 
   const refetchAllData = () => {
     refetchGroup();
@@ -220,6 +223,12 @@ export default function GroupDetailPage() {
       setShowRevealButton(true);
     }
   }, [isRandomExpenseTx, currentTxId, transactionStatus?.status]);
+
+  useEffect(() => {
+    if (typeof revealTxStatus?.status === "number" && revealTxStatus.status >= 3) {
+      setIsDiceBouncing(false);
+    }
+  }, [revealTxStatus?.status]);
 
   return (
     <div className="container mx-auto p-8">
@@ -428,6 +437,9 @@ export default function GroupDetailPage() {
           setIsRandomPayerDialogOpen(open);
           if (!open) {
             setIsRandomExpenseTx(false);
+            setRevealTxId(null);
+            setRandomPayer(null);
+            setShowRevealButton(false);
           }
         }}
       >
@@ -444,11 +456,9 @@ export default function GroupDetailPage() {
             {randomPayer ? null : (
               <>
                 <Dice6
-                  className={`h-12 w-12 text-primary mb-4 ${
-                    !showRevealButton ? "animate-bounce" : ""
-                  }`}
+                  className={`h-12 w-12 text-primary mb-4 ${isDiceBouncing ? "animate-bounce" : ""}`}
                 />
-                {!showRevealButton && (
+                {!showRevealButton && !isDiceBouncing && (
                   <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
                 )}
               </>
@@ -456,7 +466,7 @@ export default function GroupDetailPage() {
           </div>
           {showRevealButton && !randomPayer && (
             <Button
-              onClick={() => {
+              onClick={async () => {
                 if (!group) return;
 
                 const expenseAddedEvent = transactionStatus?.events.find((x) =>
@@ -467,15 +477,18 @@ export default function GroupDetailPage() {
                   return;
                 }
 
-                revealRandomPayer({
-                  groupUuid: expenseAddedEvent.data.groupUuid,
-                  memberAddress: expenseAddedEvent.data.memberAddress,
-                  expenseUuid: expenseAddedEvent.data.expenseUuid,
-                });
-
-                //setRandomPayer(picked.address);
-                setShowRevealButton(false);
-                setIsRandomExpenseTx(false);
+                try {
+                  setIsDiceBouncing(true);
+                  const txId = await revealRandomPayerAsync({
+                    groupUuid: expenseAddedEvent.data.groupUuid,
+                    memberAddress: expenseAddedEvent.data.memberAddress,
+                    expenseUuid: expenseAddedEvent.data.expenseUuid,
+                  });
+                  setRevealTxId(txId);
+                  setShowRevealButton(false);
+                } catch (err) {
+                  console.error("Failed to reveal random payer:", err);
+                }
                 refetchAllData();
               }}
               className="mt-4"
@@ -483,14 +496,14 @@ export default function GroupDetailPage() {
               Reveal
             </Button>
           )}
-          {randomPayer && (
+          {typeof revealTxStatus?.status === "number" && revealTxStatus.status >= 3 && randomPayer && (
             <div className="mt-6 text-center w-full flex flex-col items-center">
               <PartyPopper className="h-10 w-10 text-primary mb-2 animate-pop" />
               <p className="text-lg font-semibold mb-2">Selected payer:</p>
               <p className="text-xl font-mono text-primary mb-6">
                 {randomPayer.slice(0, 6)}...{randomPayer.slice(-4)}
               </p>
-              {currentTxId && <TransactionLink txId={currentTxId} />}
+              {revealTxId && <TransactionLink txId={revealTxId} />}
               <Button onClick={() => setIsRandomPayerDialogOpen(false)}>
                 Done
               </Button>
