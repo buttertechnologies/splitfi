@@ -1,6 +1,6 @@
 "use client";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,6 +76,12 @@ export default function GroupDetailPage() {
   const [showRevealButton, setShowRevealButton] = useState(false);
   const [randomPayer, setRandomPayer] = useState<string | null>(null);
   const [showOnlyUserExpenses, setShowOnlyUserExpenses] = useState(false);
+  const [isRandomExpenseTx, setIsRandomExpenseTx] = useState(false);
+  const [revealTxId, setRevealTxId] = useState<string | null>(null);
+  const { transactionStatus: revealTxStatus } = useFlowTransaction({
+    id: revealTxId || "",
+  });
+  const [isDiceBouncing, setIsDiceBouncing] = useState(false);
 
   const { data: group, refetch: refetchGroup } = useGroup({ id });
   const { data: userGroupBalance, refetch: refetchBalance } =
@@ -89,7 +95,7 @@ export default function GroupDetailPage() {
   });
   const { makePayment } = useMakePayment();
   const { addExpenseAsync } = useAddExpense();
-  const { revealRandomPayer } = useRevealRandomPayer();
+  const { revealRandomPayerAsync } = useRevealRandomPayer();
 
   const refetchAllData = () => {
     refetchGroup();
@@ -108,7 +114,7 @@ export default function GroupDetailPage() {
     description: string,
     amount: number,
     splitType: "equal" | "custom" | "random",
-    memberAmounts: { member: string; amount: number }[],
+    memberAmounts: { member: string; amount: number }[]
   ) => {
     try {
       if (splitType === "random") {
@@ -126,9 +132,7 @@ export default function GroupDetailPage() {
         setIsRandomPayerDialogOpen(true);
         setShowRevealButton(false);
         setRandomPayer(null);
-        setTimeout(() => {
-          setShowRevealButton(true);
-        }, 2500); // 2.5 seconds
+        setIsRandomExpenseTx(true);
       } else {
         const txId = await addExpenseAsync({
           type: "fixed",
@@ -184,7 +188,7 @@ export default function GroupDetailPage() {
             />
           ),
         };
-      }),
+      })
     ) || [];
 
   const paymentFeedItems =
@@ -210,6 +214,33 @@ export default function GroupDetailPage() {
           ),
         };
       }) || [];
+
+  useEffect(() => {
+    if (
+      isRandomExpenseTx &&
+      currentTxId &&
+      typeof transactionStatus?.status === "number" &&
+      transactionStatus.status >= 3
+    ) {
+      setShowRevealButton(true);
+    }
+  }, [isRandomExpenseTx, currentTxId, transactionStatus?.status]);
+
+  useEffect(() => {
+    if (
+      typeof revealTxStatus?.status === "number" &&
+      revealTxStatus.status >= 3
+    ) {
+      setIsDiceBouncing(false);
+      const payerAddress = revealTxStatus.events.find((x) =>
+        x.type.includes("RandomPayerSelected")
+      )?.data?.payerAddress;
+
+      if (payerAddress) {
+        setRandomPayer(payerAddress);
+      }
+    }
+  }, [revealTxStatus?.status]);
 
   return (
     <div className="container mx-auto p-8">
@@ -366,7 +397,7 @@ export default function GroupDetailPage() {
                   min="0"
                   max={Math.min(
                     Number(usdfBalance || 0),
-                    Number(amountYouOwe || 0),
+                    Number(amountYouOwe || 0)
                   )}
                   step="0.01"
                   value={paymentAmount}
@@ -384,8 +415,8 @@ export default function GroupDetailPage() {
                           setPaymentAmount(
                             Math.min(
                               Number(usdfBalance || 0),
-                              Number(amountYouOwe || 0),
-                            ).toFixed(8),
+                              Number(amountYouOwe || 0)
+                            ).toFixed(8)
                           )
                         }
                       >
@@ -414,7 +445,15 @@ export default function GroupDetailPage() {
 
       <Dialog
         open={isRandomPayerDialogOpen}
-        onOpenChange={setIsRandomPayerDialogOpen}
+        onOpenChange={(open) => {
+          setIsRandomPayerDialogOpen(open);
+          if (!open) {
+            setIsRandomExpenseTx(false);
+            setRevealTxId(null);
+            setRandomPayer(null);
+            setShowRevealButton(false);
+          }
+        }}
       >
         <DialogContent className="sm:max-w-[425px] flex flex-col items-center">
           <DialogHeader>
@@ -424,16 +463,18 @@ export default function GroupDetailPage() {
               expense.
             </DialogDescription>
           </DialogHeader>
-          {currentTxId && <TransactionLink txId={currentTxId} />}
+          {currentTxId && !randomPayer && (
+            <TransactionLink txId={currentTxId} />
+          )}
           <div className="flex flex-col items-center justify-center py-6">
             {randomPayer ? null : (
               <>
                 <Dice6
                   className={`h-12 w-12 text-primary mb-4 ${
-                    !showRevealButton ? "animate-bounce" : ""
+                    isDiceBouncing ? "animate-bounce" : ""
                   }`}
                 />
-                {!showRevealButton && (
+                {!showRevealButton && !isDiceBouncing && (
                   <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
                 )}
               </>
@@ -441,25 +482,29 @@ export default function GroupDetailPage() {
           </div>
           {showRevealButton && !randomPayer && (
             <Button
-              onClick={() => {
+              onClick={async () => {
                 if (!group) return;
 
                 const expenseAddedEvent = transactionStatus?.events.find((x) =>
-                  x.type.includes("ExpenseAdded"),
+                  x.type.includes("ExpenseAdded")
                 );
                 if (!expenseAddedEvent) {
                   console.error("ExpenseAdded event not found");
                   return;
                 }
 
-                revealRandomPayer({
-                  groupUuid: expenseAddedEvent.data.groupUuid,
-                  memberAddress: expenseAddedEvent.data.memberAddress,
-                  expenseUuid: expenseAddedEvent.data.expenseUuid,
-                });
-
-                //setRandomPayer(picked.address);
-                setShowRevealButton(false);
+                try {
+                  setIsDiceBouncing(true);
+                  const txId = await revealRandomPayerAsync({
+                    groupUuid: expenseAddedEvent.data.groupUuid,
+                    memberAddress: expenseAddedEvent.data.memberAddress,
+                    expenseUuid: expenseAddedEvent.data.expenseUuid,
+                  });
+                  setRevealTxId(txId);
+                  setShowRevealButton(false);
+                } catch (err) {
+                  console.error("Failed to reveal random payer:", err);
+                }
                 refetchAllData();
               }}
               className="mt-4"
@@ -467,19 +512,24 @@ export default function GroupDetailPage() {
               Reveal
             </Button>
           )}
-          {randomPayer && (
-            <div className="mt-6 text-center w-full flex flex-col items-center">
-              <PartyPopper className="h-10 w-10 text-primary mb-2 animate-pop" />
-              <p className="text-lg font-semibold mb-2">Selected payer:</p>
-              <p className="text-xl font-mono text-primary mb-6">
-                {randomPayer.slice(0, 6)}...{randomPayer.slice(-4)}
-              </p>
-              {currentTxId && <TransactionLink txId={currentTxId} />}
-              <Button onClick={() => setIsRandomPayerDialogOpen(false)}>
-                Done
-              </Button>
-            </div>
-          )}
+          {typeof revealTxStatus?.status === "number" &&
+            revealTxStatus.status >= 3 &&
+            randomPayer && (
+              <div className="text-center w-full flex flex-col items-center">
+                <PartyPopper className="h-10 w-10 text-primary mb-2 animate-pop" />
+                <p className="text-lg font-semibold mb-2">Selected payer:</p>
+                <p className="text-xl font-mono text-primary mb-6">
+                  {randomPayer.slice(0, 6)}...{randomPayer.slice(-4)}
+                </p>
+                {revealTxId && <TransactionLink txId={revealTxId} />}
+                <Button
+                  className="mt-2"
+                  onClick={() => setIsRandomPayerDialogOpen(false)}
+                >
+                  Done
+                </Button>
+              </div>
+            )}
         </DialogContent>
       </Dialog>
 
