@@ -444,7 +444,7 @@ export default function GroupDetailPage() {
       </Dialog>
 
       <Dialog
-        open={isRandomPayerDialogOpen || !!revealTxStatus}
+        open={isRandomPayerDialogOpen}
         onOpenChange={(open) => {
           setIsRandomPayerDialogOpen(open);
           if (!open) {
