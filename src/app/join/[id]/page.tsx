@@ -16,8 +16,9 @@ export default function JoinGroupPage() {
   const [txOpen, setTxOpen] = useState(false);
   const [canGoToGroup, setCanGoToGroup] = useState(false);
   const router = useRouter();
-  const { acceptInvitation } = useAcceptInvitation();
+  const { acceptInvitationAsync } = useAcceptInvitation();
   const { user } = useCurrentFlowUser();
+  const [txId, setTxId] = useState<string>();
 
   const { data: invitation } = useInvitations({ address: user?.addr });
   const groupUuid = invitation?.invitations?.find(
@@ -27,12 +28,18 @@ export default function JoinGroupPage() {
     id: groupUuid,
   });
 
-  const handleJoin = () => {
-    //setTxOpen(true);
-    groupUuid &&
-      acceptInvitation({
+  const handleJoin = async () => {
+    if (!groupUuid) return;
+    
+    try {
+      const txId = await acceptInvitationAsync({
         groupId: groupUuid,
       });
+      setTxId(txId);
+      setTxOpen(true);
+    } catch (err) {
+      console.error("Failed to join group:", err);
+    }
   };
 
   const handleSuccess = () => {
@@ -94,6 +101,7 @@ export default function JoinGroupPage() {
       <TransactionDialog
         open={txOpen}
         onOpenChange={setTxOpen}
+        txId={txId}
         pendingTitle="Joining Group"
         pendingDescription="You are being added to the group. Please wait..."
         successTitle="You've Joined!"
