@@ -20,13 +20,12 @@ export function GroupCard({ group }: GroupCardProps) {
     currency: "USD",
   }).format(totalGroupExpenses || 0);
 
-  // Dummy you owe amount for now
   const { user } = useCurrentFlowUser();
-  const { data: userGroupBalance, refetch: refetchBalance } =
-    useUserBalanceByGroupId({
-      address: user.addr,
-      groupId: group.uuid,
-    });
+  const { data: userGroupBalance } = useUserBalanceByGroupId({
+    address: user.addr,
+    groupId: group.uuid,
+  });
+
   const formattedYouOwe = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
