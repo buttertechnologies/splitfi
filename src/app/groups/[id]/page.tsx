@@ -78,7 +78,9 @@ export default function GroupDetailPage() {
   const [showOnlyUserExpenses, setShowOnlyUserExpenses] = useState(false);
   const [isRandomExpenseTx, setIsRandomExpenseTx] = useState(false);
   const [revealTxId, setRevealTxId] = useState<string | null>(null);
-  const { transactionStatus: revealTxStatus } = useFlowTransaction({ id: revealTxId || "" });
+  const { transactionStatus: revealTxStatus } = useFlowTransaction({
+    id: revealTxId || "",
+  });
   const [isDiceBouncing, setIsDiceBouncing] = useState(false);
 
   const { data: group, refetch: refetchGroup } = useGroup({ id });
@@ -93,7 +95,7 @@ export default function GroupDetailPage() {
   });
   const { makePayment } = useMakePayment();
   const { addExpenseAsync } = useAddExpense();
-  const { revealRandomPayer, revealRandomPayerAsync } = useRevealRandomPayer();
+  const { revealRandomPayerAsync } = useRevealRandomPayer();
 
   const refetchAllData = () => {
     refetchGroup();
@@ -112,7 +114,7 @@ export default function GroupDetailPage() {
     description: string,
     amount: number,
     splitType: "equal" | "custom" | "random",
-    memberAmounts: { member: string; amount: number }[],
+    memberAmounts: { member: string; amount: number }[]
   ) => {
     try {
       if (splitType === "random") {
@@ -186,7 +188,7 @@ export default function GroupDetailPage() {
             />
           ),
         };
-      }),
+      })
     ) || [];
 
   const paymentFeedItems =
@@ -225,8 +227,18 @@ export default function GroupDetailPage() {
   }, [isRandomExpenseTx, currentTxId, transactionStatus?.status]);
 
   useEffect(() => {
-    if (typeof revealTxStatus?.status === "number" && revealTxStatus.status >= 3) {
+    if (
+      typeof revealTxStatus?.status === "number" &&
+      revealTxStatus.status >= 3
+    ) {
       setIsDiceBouncing(false);
+      const payerAddress = revealTxStatus.events.find((x) =>
+        x.type.includes("RandomPayerSelected")
+      )?.data?.payerAddress;
+
+      if (payerAddress) {
+        setRandomPayer(payerAddress);
+      }
     }
   }, [revealTxStatus?.status]);
 
@@ -385,7 +397,7 @@ export default function GroupDetailPage() {
                   min="0"
                   max={Math.min(
                     Number(usdfBalance || 0),
-                    Number(amountYouOwe || 0),
+                    Number(amountYouOwe || 0)
                   )}
                   step="0.01"
                   value={paymentAmount}
@@ -403,8 +415,8 @@ export default function GroupDetailPage() {
                           setPaymentAmount(
                             Math.min(
                               Number(usdfBalance || 0),
-                              Number(amountYouOwe || 0),
-                            ).toFixed(8),
+                              Number(amountYouOwe || 0)
+                            ).toFixed(8)
                           )
                         }
                       >
@@ -432,7 +444,7 @@ export default function GroupDetailPage() {
       </Dialog>
 
       <Dialog
-        open={isRandomPayerDialogOpen}
+        open={isRandomPayerDialogOpen || !!revealTxStatus}
         onOpenChange={(open) => {
           setIsRandomPayerDialogOpen(open);
           if (!open) {
@@ -456,7 +468,9 @@ export default function GroupDetailPage() {
             {randomPayer ? null : (
               <>
                 <Dice6
-                  className={`h-12 w-12 text-primary mb-4 ${isDiceBouncing ? "animate-bounce" : ""}`}
+                  className={`h-12 w-12 text-primary mb-4 ${
+                    isDiceBouncing ? "animate-bounce" : ""
+                  }`}
                 />
                 {!showRevealButton && !isDiceBouncing && (
                   <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
@@ -470,7 +484,7 @@ export default function GroupDetailPage() {
                 if (!group) return;
 
                 const expenseAddedEvent = transactionStatus?.events.find((x) =>
-                  x.type.includes("ExpenseAdded"),
+                  x.type.includes("ExpenseAdded")
                 );
                 if (!expenseAddedEvent) {
                   console.error("ExpenseAdded event not found");
@@ -496,19 +510,21 @@ export default function GroupDetailPage() {
               Reveal
             </Button>
           )}
-          {typeof revealTxStatus?.status === "number" && revealTxStatus.status >= 3 && randomPayer && (
-            <div className="mt-6 text-center w-full flex flex-col items-center">
-              <PartyPopper className="h-10 w-10 text-primary mb-2 animate-pop" />
-              <p className="text-lg font-semibold mb-2">Selected payer:</p>
-              <p className="text-xl font-mono text-primary mb-6">
-                {randomPayer.slice(0, 6)}...{randomPayer.slice(-4)}
-              </p>
-              {revealTxId && <TransactionLink txId={revealTxId} />}
-              <Button onClick={() => setIsRandomPayerDialogOpen(false)}>
-                Done
-              </Button>
-            </div>
-          )}
+          {typeof revealTxStatus?.status === "number" &&
+            revealTxStatus.status >= 3 &&
+            randomPayer && (
+              <div className="mt-6 text-center w-full flex flex-col items-center">
+                <PartyPopper className="h-10 w-10 text-primary mb-2 animate-pop" />
+                <p className="text-lg font-semibold mb-2">Selected payer:</p>
+                <p className="text-xl font-mono text-primary mb-6">
+                  {randomPayer.slice(0, 6)}...{randomPayer.slice(-4)}
+                </p>
+                {revealTxId && <TransactionLink txId={revealTxId} />}
+                <Button onClick={() => setIsRandomPayerDialogOpen(false)}>
+                  Done
+                </Button>
+              </div>
+            )}
         </DialogContent>
       </Dialog>
 

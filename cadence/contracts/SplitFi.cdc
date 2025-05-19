@@ -31,6 +31,13 @@ contract SplitFi {
         expenseUuid: UInt64,
     )
 
+    access(all) event RandomPayerSelected(
+        groupUuid: UInt64,
+        memberAddress: Address,
+        expenseUuid: UInt64,
+        payerAddress: Address,
+    )
+
     init() {
         self.MembershipCollectionPublicPath = /public/splitFiMembershipCollection
         self.MembershipCollectionStoragePath = /storage/splitFiMembershipCollection
@@ -460,10 +467,21 @@ contract SplitFi {
         }
 
         access(all) fun revealPayer() {
+            pre {
+                self.payer == nil: "Payer already revealed"
+            }
             let req <- self.popRequest()
             let value = SplitFi.consumer.fulfillRandomInRange(request: <-req, min: 0, max: UInt64(self.debtors.length - 1))
             let keys = self.debtors.keys
             self.payer = keys[value]
+
+            // Emit an event to notify the group of the selected payer
+            emit SplitFi.RandomPayerSelected(
+                groupUuid: self.uuid,
+                memberAddress: self.owner!.address,
+                expenseUuid: self.uuid,
+                payerAddress: self.payer!
+            )
         }
     }
 
