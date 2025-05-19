@@ -1,4 +1,4 @@
-import "Divy"
+import "SplitFi"
 import "FungibleToken"
 import "FungibleTokenMetadataViews"
 import "EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed"
@@ -7,12 +7,12 @@ import "EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed"
  * Make a payment to a member's debt.
  */
 transaction(groupId: UInt64, maxAmount: UFix64) {
-    let memberRef: auth(Divy.Owner) &Divy.Membership
+    let memberRef: auth(SplitFi.Owner) &SplitFi.Membership
     let vaultRef: auth(FungibleToken.Withdraw) &EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.Vault
     let address: Address
 
     prepare(acct: auth(Storage) &Account) {
-        let membershipCollection = acct.storage.borrow<auth(Divy.Owner) &Divy.MembershipCollection>(from: Divy.MembershipCollectionStoragePath)
+        let membershipCollection = acct.storage.borrow<auth(SplitFi.Owner) &SplitFi.MembershipCollection>(from: SplitFi.MembershipCollectionStoragePath)
             ?? panic("Membership collection not found")
 
         self.memberRef = membershipCollection.borrowOwnerByGroupId(groupId: groupId)

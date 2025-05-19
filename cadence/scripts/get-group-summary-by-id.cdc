@@ -1,14 +1,14 @@
-import "Divy"
-import "DivyDto"
+import "SplitFi"
+import "SplitFiDto"
 
 /**
  * Returns the group summary for a given group ID.
  */
-access(all) fun main(groupId: UInt64): DivyDto.GroupSummaryDto {
+access(all) fun main(groupId: UInt64): SplitFiDto.GroupSummaryDto {
     // Get the group from the contract
-    let groupRef = Divy.borrowGroup(groupId: groupId)
+    let groupRef = SplitFi.borrowGroup(groupId: groupId)
         ?? panic("Group not found")
 
     // Return the group summary
-    return DivyDto.GroupSummaryDto(groupRef: groupRef)
+    return SplitFiDto.GroupSummaryDto(groupRef: groupRef)
 }

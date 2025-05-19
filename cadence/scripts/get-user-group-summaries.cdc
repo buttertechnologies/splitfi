@@ -1,24 +1,24 @@
-import "Divy"
-import "DivyDto"
+import "SplitFi"
+import "SplitFiDto"
 
 /**
  * Returns all of the groups that the user is a member of.
  */
-access(all) fun main(address: Address): [DivyDto.GroupSummaryDto] {
+access(all) fun main(address: Address): [SplitFiDto.GroupSummaryDto] {
     // Get the user's membership collection
     let membershipCollectionRef = getAccount(address)
         .capabilities
-        .borrow<&Divy.MembershipCollection>(Divy.MembershipCollectionPublicPath)
+        .borrow<&SplitFi.MembershipCollection>(SplitFi.MembershipCollectionPublicPath)
     
     if membershipCollectionRef == nil {
         return []
     }
 
     // Iterate over the memberships
-    let result: [DivyDto.GroupSummaryDto] = []
+    let result: [SplitFiDto.GroupSummaryDto] = []
     for group in membershipCollectionRef!.memberships.keys {
         result.append(
-            DivyDto.GroupSummaryDto(
+            SplitFiDto.GroupSummaryDto(
                 groupRef: membershipCollectionRef!.borrow(uuid: group).borrowGroup()
             )
         )

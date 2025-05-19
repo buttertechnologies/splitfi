@@ -12,6 +12,7 @@ export interface MemberSummary {
 }
 
 export interface ExpenseSummary {
+  uuid: string;
   description: string;
   amount: string;
   timestamp: string;

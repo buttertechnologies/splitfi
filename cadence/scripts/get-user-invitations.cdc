@@ -1,16 +1,16 @@
-import "Divy"
-import "DivyDto"
+import "SplitFi"
+import "SplitFiDto"
 
 /**
  * Returns all of the invitations that the user has received.
  */
-access(all) fun main(address: Address): DivyDto.InvitationListDto {
-    let invitations = Divy.invitations[address]
+access(all) fun main(address: Address): SplitFiDto.InvitationListDto {
+    let invitations = SplitFi.invitations[address]
     if invitations == nil {
-        let dummyRef: @{UInt64: Divy.Invitation} <- {}
-        let ret = DivyDto.InvitationListDto(invitationListRef: &dummyRef as &{UInt64: Divy.Invitation})
+        let dummyRef: @{UInt64: SplitFi.Invitation} <- {}
+        let ret = SplitFiDto.InvitationListDto(invitationListRef: &dummyRef as &{UInt64: SplitFi.Invitation})
         destroy dummyRef
         return ret
     }
-    return DivyDto.InvitationListDto(invitationListRef: invitations!)
+    return SplitFiDto.InvitationListDto(invitationListRef: invitations!)
 }

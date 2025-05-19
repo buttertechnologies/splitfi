@@ -4,8 +4,8 @@ access(all) let account = Test.createAccount()
 
 access(all) fun testContract() {
     let err = Test.deployContract(
-        name: "Divy",
-        path: "../contracts/Divy.cdc",
+        name: "SplitFi",
+        path: "../contracts/SplitFi.cdc",
         arguments: [],
     )
 

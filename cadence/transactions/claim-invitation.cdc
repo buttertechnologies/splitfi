@@ -1,4 +1,4 @@
-import "Divy"
+import "SplitFi"
 import "EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed"
 import "FungibleTokenMetadataViews"
 import "FungibleToken"
@@ -9,7 +9,7 @@ import "FungibleToken"
 transaction (
     groupId: UInt64,
 ) {
-    var membershipCollectionRef: auth(Divy.Owner) &Divy.MembershipCollection?
+    var membershipCollectionRef: auth(SplitFi.Owner) &SplitFi.MembershipCollection?
 
     prepare(account: auth(Storage, Capabilities) &Account) {        
         // Setup USDF
@@ -35,27 +35,27 @@ transaction (
         }
         
         // Initialize the membership collection if it doesn't exist
-        self.membershipCollectionRef = account.storage.borrow<auth(Divy.Owner)&Divy.MembershipCollection>(
-            from: Divy.MembershipCollectionStoragePath
+        self.membershipCollectionRef = account.storage.borrow<auth(SplitFi.Owner)&SplitFi.MembershipCollection>(
+            from: SplitFi.MembershipCollectionStoragePath
         )
         if (self.membershipCollectionRef == nil) {
-            account.storage.save(<-Divy.createMembershipCollection(), to: Divy.MembershipCollectionStoragePath)
-            self.membershipCollectionRef = account.storage.borrow<auth(Divy.Owner)&Divy.MembershipCollection>(
-                from: Divy.MembershipCollectionStoragePath
+            account.storage.save(<-SplitFi.createMembershipCollection(), to: SplitFi.MembershipCollectionStoragePath)
+            self.membershipCollectionRef = account.storage.borrow<auth(SplitFi.Owner)&SplitFi.MembershipCollection>(
+                from: SplitFi.MembershipCollectionStoragePath
             )
         }
 
         // Publish the membership collection if it doesn't exist
-        let pubCap = account.capabilities.get<auth(Divy.Owner) &Divy.MembershipCollection>(
-            Divy.MembershipCollectionPublicPath
+        let pubCap = account.capabilities.get<auth(SplitFi.Owner) &SplitFi.MembershipCollection>(
+            SplitFi.MembershipCollectionPublicPath
         )
         if (pubCap.check() == false) {
-            account.capabilities.unpublish(Divy.MembershipCollectionPublicPath)
+            account.capabilities.unpublish(SplitFi.MembershipCollectionPublicPath)
             account.capabilities.publish(
-                account.capabilities.storage.issue<&Divy.MembershipCollection>(
-                    Divy.MembershipCollectionStoragePath,
+                account.capabilities.storage.issue<&SplitFi.MembershipCollection>(
+                    SplitFi.MembershipCollectionStoragePath,
                 ),
-                at: Divy.MembershipCollectionPublicPath,
+                at: SplitFi.MembershipCollectionPublicPath,
             )
         }
     }

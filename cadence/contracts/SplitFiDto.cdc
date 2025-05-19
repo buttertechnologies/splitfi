@@ -1,16 +1,18 @@
-import "Divy"
+import "SplitFi"
 
 /**
- * This contract contains data transfer objects (DTOs) for the Divy contract.
+ * This contract contains data transfer objects (DTOs) for the SplitFi contract.
  */
-access(all) contract DivyDto {
+access(all) contract SplitFiDto {
     access(all) struct MemberExpenseDto {
+        access(all) let uuid: UInt64
         access(all) let amount: UFix64
         access(all) let description: String
         access(all) let timestamp: UFix64
         access(all) let debtors: {Address: UFix64}
 
-        init(expense: &Divy.MemberExpense) {
+        init(expense: &SplitFi.MemberExpense) {
+            self.uuid = expense.uuid
             self.description = expense.description
             self.amount = expense.debtAllocation.total()
             self.timestamp = expense.timestamp
@@ -26,7 +28,7 @@ access(all) contract DivyDto {
         access(all) let recipients: {Address: UFix64}
         access(all) let timestamp: UFix64
 
-        init(payment: &Divy.PaymentInfo) {
+        init(payment: &SplitFi.PaymentInfo) {
             self.recipients = *payment.recipients
             self.timestamp = payment.timestamp
         }
@@ -38,13 +40,14 @@ access(all) contract DivyDto {
         access(all) let expenses: [MemberExpenseDto]
         access(all) let payments: [PaymentInfoDto]
 
-        init(memberRef: &Divy.Membership) {
+        init(memberRef: &SplitFi.Membership) {
             self.uuid = memberRef.uuid
             self.address = memberRef.owner!.address
             
             let expenses: [MemberExpenseDto] = []
-            for expense in memberRef.expenses {
-                let expenseDto = MemberExpenseDto(expense: expense)
+            for expenseUuid in memberRef.expenses.keys {
+                let expenseRef = memberRef.expenses[expenseUuid]!
+                let expenseDto = MemberExpenseDto(expense: expenseRef)
                 expenses.append(expenseDto)
             }
             self.expenses = expenses
@@ -63,7 +66,7 @@ access(all) contract DivyDto {
         access(all) let uuid: UInt64
         access(all) let members: [MembershipDto]
 
-        init(groupRef: &Divy.Group) {
+        init(groupRef: &SplitFi.Group) {
             self.name = groupRef.name
             self.uuid = groupRef.uuid
 
@@ -85,12 +88,12 @@ access(all) contract DivyDto {
         access(all) let uuid: UInt64
         access(all) let group: GroupSummaryDto?
 
-        init(invitationRef: &Divy.Invitation) {
+        init(invitationRef: &SplitFi.Invitation) {
             self.uuid = invitationRef.uuid
 
             // Revoked invitations will not have a group and be nil
             let groupId = invitationRef.getGroupId()
-            let groupRef = Divy.borrowGroup(groupId: groupId)!
+            let groupRef = SplitFi.borrowGroup(groupId: groupId)!
             self.group = GroupSummaryDto(groupRef: groupRef)
         }
     }
@@ -98,7 +101,7 @@ access(all) contract DivyDto {
     access(all) struct InvitationListDto {
         access(all) let invitations: [InvitationDto]
 
-        init(invitationListRef: &{UInt64: Divy.Invitation}) {
+        init(invitationListRef: &{UInt64: SplitFi.Invitation}) {
             self.invitations = []
             for inviteUuid in invitationListRef.keys {
                 let inviteRef = invitationListRef[inviteUuid]
