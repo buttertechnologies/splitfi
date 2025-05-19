@@ -1,6 +1,6 @@
 "use client";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,6 +76,7 @@ export default function GroupDetailPage() {
   const [showRevealButton, setShowRevealButton] = useState(false);
   const [randomPayer, setRandomPayer] = useState<string | null>(null);
   const [showOnlyUserExpenses, setShowOnlyUserExpenses] = useState(false);
+  const [isRandomExpenseTx, setIsRandomExpenseTx] = useState(false);
 
   const { data: group, refetch: refetchGroup } = useGroup({ id });
   const { data: userGroupBalance, refetch: refetchBalance } =
@@ -126,9 +127,7 @@ export default function GroupDetailPage() {
         setIsRandomPayerDialogOpen(true);
         setShowRevealButton(false);
         setRandomPayer(null);
-        setTimeout(() => {
-          setShowRevealButton(true);
-        }, 2500); // 2.5 seconds
+        setIsRandomExpenseTx(true);
       } else {
         const txId = await addExpenseAsync({
           type: "fixed",
@@ -210,6 +209,17 @@ export default function GroupDetailPage() {
           ),
         };
       }) || [];
+
+  useEffect(() => {
+    if (
+      isRandomExpenseTx &&
+      currentTxId &&
+      typeof transactionStatus?.status === "number" &&
+      transactionStatus.status >= 3
+    ) {
+      setShowRevealButton(true);
+    }
+  }, [isRandomExpenseTx, currentTxId, transactionStatus?.status]);
 
   return (
     <div className="container mx-auto p-8">
@@ -414,7 +424,12 @@ export default function GroupDetailPage() {
 
       <Dialog
         open={isRandomPayerDialogOpen}
-        onOpenChange={setIsRandomPayerDialogOpen}
+        onOpenChange={(open) => {
+          setIsRandomPayerDialogOpen(open);
+          if (!open) {
+            setIsRandomExpenseTx(false);
+          }
+        }}
       >
         <DialogContent className="sm:max-w-[425px] flex flex-col items-center">
           <DialogHeader>
@@ -460,6 +475,7 @@ export default function GroupDetailPage() {
 
                 //setRandomPayer(picked.address);
                 setShowRevealButton(false);
+                setIsRandomExpenseTx(false);
                 refetchAllData();
               }}
               className="mt-4"
