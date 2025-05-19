@@ -1,4 +1,4 @@
-import "Divy"
+import "SplitFi"
 
 /**
  * Create an anonymous invitation to a group to invite a member out-of-band.
@@ -9,12 +9,12 @@ transaction(
     signatureAlgorithm: UInt8,
     hashAlgorithm: UInt8,
 ) {
-    let groupAdminRef: auth(Divy.Admin) &Divy.Group
+    let groupAdminRef: auth(SplitFi.Admin) &SplitFi.Group
 
     prepare(account: auth(Storage) &Account) {
         // Get an owner reference to the membership
-        let membershipCollectionRef = account.storage.borrow<auth(Divy.Owner) &Divy.MembershipCollection>(
-            from: Divy.MembershipCollectionStoragePath
+        let membershipCollectionRef = account.storage.borrow<auth(SplitFi.Owner) &SplitFi.MembershipCollection>(
+            from: SplitFi.MembershipCollectionStoragePath
         ) ?? panic("Membership collection not found")
 
         // Borrow admin reference to the group

@@ -1,4 +1,4 @@
-import "Divy"
+import "SplitFi"
 import "EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed"
 import "FungibleTokenMetadataViews"
 import "FungibleToken"
@@ -7,7 +7,7 @@ import "FungibleToken"
  * Creates a new group and stores the membership in the account's storage.
  */
 transaction(name: String, invitees: [Address]) {
-    var membershipCollectionRef: &Divy.MembershipCollection?
+    var membershipCollectionRef: &SplitFi.MembershipCollection?
 
     prepare(account: auth(SaveValue, BorrowValue, PublishCapability, UnpublishCapability, IssueStorageCapabilityController) &Account) {
         // Setup USDF
@@ -33,34 +33,34 @@ transaction(name: String, invitees: [Address]) {
         }
         
         // Initialize the membership collection if it doesn't exist
-        self.membershipCollectionRef = account.storage.borrow<&Divy.MembershipCollection>(
-            from: Divy.MembershipCollectionStoragePath
+        self.membershipCollectionRef = account.storage.borrow<&SplitFi.MembershipCollection>(
+            from: SplitFi.MembershipCollectionStoragePath
         )
         if (self.membershipCollectionRef == nil) {
-            account.storage.save(<-Divy.createMembershipCollection(), to: Divy.MembershipCollectionStoragePath)
-            self.membershipCollectionRef = account.storage.borrow<&Divy.MembershipCollection>(
-                from: Divy.MembershipCollectionStoragePath
+            account.storage.save(<-SplitFi.createMembershipCollection(), to: SplitFi.MembershipCollectionStoragePath)
+            self.membershipCollectionRef = account.storage.borrow<&SplitFi.MembershipCollection>(
+                from: SplitFi.MembershipCollectionStoragePath
             )
         }
 
         // Publish the membership collection if it doesn't exist
-        let pubCap = account.capabilities.get<auth(Divy.Owner) &Divy.MembershipCollection>(
-            Divy.MembershipCollectionPublicPath
+        let pubCap = account.capabilities.get<auth(SplitFi.Owner) &SplitFi.MembershipCollection>(
+            SplitFi.MembershipCollectionPublicPath
         )
         if (pubCap.check() == false) {
-            account.capabilities.unpublish(Divy.MembershipCollectionPublicPath)
+            account.capabilities.unpublish(SplitFi.MembershipCollectionPublicPath)
             account.capabilities.publish(
-                account.capabilities.storage.issue<&Divy.MembershipCollection>(
-                    Divy.MembershipCollectionStoragePath,
+                account.capabilities.storage.issue<&SplitFi.MembershipCollection>(
+                    SplitFi.MembershipCollectionStoragePath,
                 ),
-                at: Divy.MembershipCollectionPublicPath,
+                at: SplitFi.MembershipCollectionPublicPath,
             )
         }
     }
 
     execute {
         // Create the group and get the admin capability
-        let adminCap = Divy.createGroup(name: name)
+        let adminCap = SplitFi.createGroup(name: name)
         let adminRef = adminCap.borrow()!
 
         // Create a membership
