@@ -59,29 +59,6 @@ interface Member {
   status?: "pending" | "active";
 }
 
-const dummyPayments = [
-  {
-    type: "payment",
-    id: 1,
-    from: "0xabcdef1234567890",
-    to: ["0x1234567890abcdef", "0x9876543210fedcba"],
-    amounts: [150.0, 75.0],
-    date: new Date("2024-03-16T10:00:00"),
-    transactionId:
-      "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-  },
-  {
-    type: "payment",
-    id: 2,
-    from: "0x9876543210fedcba",
-    to: ["0x1234567890abcdef"],
-    amounts: [150.0],
-    date: new Date("2024-03-16T11:30:00"),
-    transactionId:
-      "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-  },
-];
-
 export default function GroupDetailPage() {
   const params = useParams<{ id: string }>();
   const { id } = params;
@@ -119,13 +96,11 @@ export default function GroupDetailPage() {
     refetchBalance();
   };
 
-  // Calculate total group expenses from dummyExpenses
   const totalGroupExpenses = group?.members
     .flatMap((x) => x.expenses)
     .reduce((sum, expense) => sum + Number(expense.amount), 0);
 
   const handleEditGroup = (groupName: string, members: string[]) => {
-    console.log("Editing group:", { groupName, members });
     setIsEditDialogOpen(false);
   };
 
@@ -133,7 +108,7 @@ export default function GroupDetailPage() {
     description: string,
     amount: number,
     splitType: "equal" | "custom" | "random",
-    memberAmounts: { member: string; amount: number }[]
+    memberAmounts: { member: string; amount: number }[],
   ) => {
     try {
       if (splitType === "random") {
@@ -168,7 +143,8 @@ export default function GroupDetailPage() {
         });
 
         setCurrentTxId(txId);
-        setIsAddExpenseDialogOpen(true);
+        setIsAddExpenseDialogOpen(false);
+        setIsTransactionDialogOpen(true);
       }
     } catch (err) {
       console.error("Failed to add expense:", err);
@@ -208,7 +184,7 @@ export default function GroupDetailPage() {
             />
           ),
         };
-      })
+      }),
     ) || [];
 
   const paymentFeedItems =
@@ -339,16 +315,34 @@ export default function GroupDetailPage() {
             {showOnlyUserExpenses ? "Show All Expenses" : "Show My Expenses"}
           </Button>
         </div>
-        <div className="grid gap-4">
-          {[...expenseFeedItems, ...paymentFeedItems]
-            .filter((item) => {
-              if (!showOnlyUserExpenses) return true;
-              // Only show expenses added by current user
-              return item.content.props.addedBy === user?.addr;
-            })
-            .sort((a, b) => b.date.getTime() - a.date.getTime())
-            .map((item) => item.content)}
-        </div>
+        {[...expenseFeedItems, ...paymentFeedItems].length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+            <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
+              <Receipt className="w-12 h-12 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">No Activity Yet</h3>
+            <p className="text-muted-foreground max-w-md">
+              There hasn't been any activity in this group yet. Add an expense to get started!
+            </p>
+            <Button 
+              onClick={() => setIsAddExpenseDialogOpen(true)}
+              className="mt-4"
+            >
+              Add Expense
+            </Button>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {[...expenseFeedItems, ...paymentFeedItems]
+              .filter((item) => {
+                if (!showOnlyUserExpenses) return true;
+                // Only show expenses added by current user
+                return item.content.props.addedBy === user?.addr;
+              })
+              .sort((a, b) => b.date.getTime() - a.date.getTime())
+              .map((item) => item.content)}
+          </div>
+        )}
       </div>
 
       <Dialog
@@ -372,7 +366,7 @@ export default function GroupDetailPage() {
                   min="0"
                   max={Math.min(
                     Number(usdfBalance || 0),
-                    Number(amountYouOwe || 0)
+                    Number(amountYouOwe || 0),
                   )}
                   step="0.01"
                   value={paymentAmount}
@@ -390,8 +384,8 @@ export default function GroupDetailPage() {
                           setPaymentAmount(
                             Math.min(
                               Number(usdfBalance || 0),
-                              Number(amountYouOwe || 0)
-                            ).toFixed(8)
+                              Number(amountYouOwe || 0),
+                            ).toFixed(8),
                           )
                         }
                       >
@@ -451,7 +445,7 @@ export default function GroupDetailPage() {
                 if (!group) return;
 
                 const expenseAddedEvent = transactionStatus?.events.find((x) =>
-                  x.type.includes("ExpenseAdded")
+                  x.type.includes("ExpenseAdded"),
                 );
                 if (!expenseAddedEvent) {
                   console.error("ExpenseAdded event not found");
