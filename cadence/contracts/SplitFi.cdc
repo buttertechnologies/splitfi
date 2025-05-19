@@ -604,11 +604,12 @@ contract SplitFi {
             )! as! FungibleTokenMetadataViews.FTVaultData
 
             let recipients: {Address: UFix64} = {}
+            var remainingAmount = maxAmount 
 
             // Distribute payment to all members
             // TODO: make fair
             for peerAddress in group.members.keys {
-                if vaultRef.balance <= 0.0 {
+                if vaultRef.balance <= 0.0 || remainingAmount <= 0.0 {
                     break
                 }
 
@@ -617,14 +618,9 @@ contract SplitFi {
                 }
 
                 let signedBalance = group.getMemberBalance(address: peerAddress)
-
-                log("4")
-                log(signedBalance)
                 if signedBalance <= 0.0 {
                     continue
                 }
-
-                log("Member balance")
 
                 let balance = UFix64(signedBalance)
                 let paymentAmount = balance > vaultRef.balance ? vaultRef.balance : balance
@@ -646,6 +642,9 @@ contract SplitFi {
 
                 // Update the payment info
                 recipients[peerAddress] = paymentAmount
+
+                // Update the max amount
+                remainingAmount = remainingAmount - paymentAmount
             }
 
             // Create a payment info object
