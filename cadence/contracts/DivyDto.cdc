@@ -5,12 +5,14 @@ import "Divy"
  */
 access(all) contract DivyDto {
     access(all) struct MemberExpenseDto {
+        access(all) let uuid: UInt64
         access(all) let amount: UFix64
         access(all) let description: String
         access(all) let timestamp: UFix64
         access(all) let debtors: {Address: UFix64}
 
         init(expense: &Divy.MemberExpense) {
+            self.uuid = expense.uuid
             self.description = expense.description
             self.amount = expense.debtAllocation.total()
             self.timestamp = expense.timestamp
@@ -43,8 +45,9 @@ access(all) contract DivyDto {
             self.address = memberRef.owner!.address
             
             let expenses: [MemberExpenseDto] = []
-            for expense in memberRef.expenses {
-                let expenseDto = MemberExpenseDto(expense: expense)
+            for expenseUuid in memberRef.expenses.keys {
+                let expenseRef = memberRef.expenses[expenseUuid]!
+                let expenseDto = MemberExpenseDto(expense: expenseRef)
                 expenses.append(expenseDto)
             }
             self.expenses = expenses

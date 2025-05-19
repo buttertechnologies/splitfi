@@ -2,6 +2,7 @@ import "Crypto"
 import "EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed"
 import "FungibleTokenMetadataViews"
 import "FungibleToken"
+import "RandomConsumer"
 access(all)
 contract Divy {
     access(all) let groups: {UInt64: Bool}
@@ -16,9 +17,17 @@ contract Divy {
     access(all) entitlement Member
     access(all) entitlement Invitee
 
+    access(self) let consumer: @RandomConsumer.Consumer
+
     access(all) event GroupCreated(
         groupUuid: UInt64,
         name: String,
+    )
+
+    access(all) event ExpenseAdded(
+        groupUuid: UInt64,
+        memberAddress: Address,
+        expenseUuid: UInt64,
     )
 
     init() {
@@ -27,6 +36,8 @@ contract Divy {
 
         self.groups = {}
         self.invitations <- {}
+
+        self.consumer <- RandomConsumer.createConsumer()
     }
 
     /**
@@ -154,7 +165,9 @@ contract Divy {
             for member in self.members.values {
                 let memberRef = member.borrow()
                     ?? panic("Member not found for address ".concat(member.collectionCapability.address.toString()))
-                for expense in memberRef.expenses {
+                let expensesRef = memberRef.expenses
+                for expenseUuid in expensesRef.keys {
+                    let expense = expensesRef[expenseUuid]!
                     total = total + expense.debtAllocation.total()
                 }
             }
@@ -208,7 +221,9 @@ contract Divy {
                 if memberRef.owner!.address == address {
                     continue
                 }
-                for expense in memberRef.expenses {
+                let expensesRef = memberRef.expenses
+                for expenseUuid in expensesRef.keys {
+                    let expense = expensesRef[expenseUuid]!
                     for debtor in expense.debtAllocation.getDebtors() {
                         if debtor == address {
                             totalOwing = totalOwing + Fix64(expense.debtAllocation.shareOf(member: debtor))
@@ -339,7 +354,7 @@ contract Divy {
      * The `DebtAllocation` interface is used to represent the allocation of debt for a given expense.
      * It contains the amount of the expense and a list of members who are responsible for it.
      */
-    access(all) struct interface DebtAllocation {
+    access(all) resource interface DebtAllocation {
         /**
          * Return the share of the expense for a given member.
          */
@@ -358,7 +373,7 @@ contract Divy {
      * The `FixedDebtAllocation` resource is used to represent a fixed allocation of debt for a given expense.
      * It contains the amount of the expense and a list of members who are responsible for it.
      */
-    access(all) struct FixedDebtAllocation: DebtAllocation {
+    access(all) resource FixedDebtAllocation: DebtAllocation {
         access(all) let amount: UFix64
         access(all) let debtors: {Address: UFix64}
 
@@ -384,7 +399,7 @@ contract Divy {
     /**
      * The `PercentageDebtAllocation` resource is used to represent a percentage allocation of debt for a given expense.
      */
-    access(all) struct PercentageDebtAllocation: DebtAllocation {
+    access(all) resource PercentageDebtAllocation: DebtAllocation {
         access(all) let amount: UFix64
         access(all) let debtors: {Address: UFix64}
 
@@ -407,21 +422,115 @@ contract Divy {
     }
 
     /**
+     * The `RandomDebtAllocation` resource is used to represent a random allocation of debt for a given expense.
+     */
+    access(all) resource RandomDebtAllocation: DebtAllocation, RandomConsumer.RequestWrapper {
+        access(all) let amount: UFix64
+        access(all) let debtors: {Address: Bool}
+        access(all) var request: @RandomConsumer.Request?
+        access(all) var payer: Address?
+
+        init(amount: UFix64, debtors: [Address]) {
+            self.amount = amount
+            self.debtors = {}
+            for debtor in debtors {
+                self.debtors[debtor] = true
+            }
+            self.request <- Divy.consumer.requestRandomness()
+            self.payer = nil
+        }
+
+        access(all) fun shareOf(member: Address): UFix64 {
+            if self.payer == nil {
+                return 0.0
+            }
+            if member == self.payer {
+                return self.amount
+            }
+            return 0.0
+        }
+
+        access(all) fun getDebtors(): &[Address] {
+            return &self.debtors.keys
+        }
+
+        access(all) fun total(): UFix64 {
+            return self.amount
+        }
+
+        access(all) fun revealPayer() {
+            let req <- self.popRequest()
+            let value = Divy.consumer.fulfillRandomInRange(request: <-req, min: 0, max: UInt64(self.debtors.length - 1))
+            let keys = self.debtors.keys
+            self.payer = keys[value]
+        }
+    }
+
+    /**
+     * Create a new `FixedDebtAllocation` with the given amount and debtors.
+     */
+    access(all) fun createFixedDebtAllocation(
+        amount: UFix64,
+        debtors: {Address: UFix64}
+    ): @FixedDebtAllocation {
+        return <- create FixedDebtAllocation(amount: amount, debtors: debtors)
+    }
+
+    /**
+     * Create a new `PercentageDebtAllocation` with the given amount and debtors.
+     */
+    access(all) fun createPercentageDebtAllocation(
+        amount: UFix64,
+        debtors: {Address: UFix64}
+    ): @PercentageDebtAllocation {
+        return <- create PercentageDebtAllocation(amount: amount, debtors: debtors)
+    }
+
+    /**
+     * Create a new `RandomDebtAllocation` with the given amount and debtors.
+     */
+    access(all) fun createRandomDebtAllocation(
+        amount: UFix64,
+        debtors: [Address],
+    ): @RandomDebtAllocation {
+        return <- create RandomDebtAllocation(amount: amount, debtors: debtors)
+    }
+
+    /**
      * The `MemberExpense` resource is used to represent incurred by a member of a group.
      */
-    access(all) struct MemberExpense {
+    access(all) resource MemberExpense {
         // Map of debtors to the fraction of the expense they owe
-        access(all) var debtAllocation: {DebtAllocation}
+        access(all) var debtAllocation: @{DebtAllocation}
         // Description of the expense
         access(all) var description: String
         // Timestamp of when expense was incurred in seconds since the epoch (UTC)
         access(all) var timestamp: UFix64
 
-        init(debtAllocation: {DebtAllocation}, description: String, timestamp: UFix64) {
-            self.debtAllocation = debtAllocation
+        init(debtAllocation: @{DebtAllocation}, description: String, timestamp: UFix64) {
+            pre {
+                debtAllocation.getType() == Type<@RandomDebtAllocation>() 
+                || debtAllocation.getType() == Type<@FixedDebtAllocation>()
+                || debtAllocation.getType() == Type<@PercentageDebtAllocation>():
+                "Invalid debt allocation type"
+            }
+            
+            self.debtAllocation <- debtAllocation
             self.timestamp = timestamp
             self.description = description
         }
+    }
+
+    access(all) fun createMemberExpense(
+        debtAllocation: @{DebtAllocation},
+        description: String,
+        timestamp: UFix64
+    ): @MemberExpense {
+        return <- create MemberExpense(
+            debtAllocation: <-debtAllocation,
+            description: description,
+            timestamp: timestamp
+        )
     }
 
     /**
@@ -448,7 +557,7 @@ contract Divy {
         // The UUID of the membership.
         access(all) let groupId: UInt64
         // Expenses incurred by the member, indexed by the expense UUID.
-        access(all) let expenses: [MemberExpense]
+        access(all) let expenses: @{UInt64: MemberExpense}
         // The payments made by the member.
         access(all) let payments: [PaymentInfo]
         // The capability to the group.
@@ -458,7 +567,7 @@ contract Divy {
         
         init(memberCapability: Capability<auth(Member) &Group>) {
             self.groupId = memberCapability.borrow()!.uuid
-            self.expenses = []
+            self.expenses <- {}
             self.payments = []
             self.memberCapability = memberCapability
             self.adminCapability = nil
@@ -467,8 +576,13 @@ contract Divy {
         /**
          * Add an expense to the group.
          */
-        access(Owner) fun addExpense(expense: MemberExpense) {
-            self.expenses.append(expense)
+        access(Owner) fun addExpense(expense: @MemberExpense) {
+            emit Divy.ExpenseAdded(
+                groupUuid: self.groupId,
+                memberAddress: self.owner!.address,
+                expenseUuid: expense.uuid,
+            )
+            self.expenses[expense.uuid] <-! expense
         }
 
         /**
@@ -554,7 +668,9 @@ contract Divy {
                 }
             }
 
-            for expense in (&self.expenses as &[MemberExpense]) {
+            let expensesRef = (&self.expenses as &{UInt64: MemberExpense})
+            for expenseUuid in expensesRef.keys {
+                let expense = expensesRef[expenseUuid]!
                 for debtor in expense.debtAllocation.getDebtors() {
                     if debtor == self.owner!.address {
                         continue

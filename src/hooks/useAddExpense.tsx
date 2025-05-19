@@ -1,6 +1,7 @@
 import { useFlowMutate } from "@onflow/kit";
 import { arg, sansPrefix, t } from "@onflow/fcl";
-import ADD_EXPENSE from "../../cadence/transactions/add-expense.cdc";
+import ADD_FIXED_EXPENSE from "../../cadence/transactions/add-fixed-expense.cdc";
+import ADD_RANDOM_EXPENSE from "../../cadence/transactions/add-random-expense.cdc";
 import { InferMutationVariables } from "@/types/query";
 import { getDivyAddress } from "@/lib/utils";
 
@@ -31,71 +32,52 @@ type UseAddExpenseMutateFixedParams = UseAddExpenseMutateBaseParams & {
   }[];
 };
 
+type UseAddExpenseMutateRandomParams = UseAddExpenseMutateBaseParams & {
+  type: "random";
+  debtors: string[];
+};
+
 type UseAddExpenseMutateParams =
   | UseAddExpenseMutatePercentageParams
-  | UseAddExpenseMutateFixedParams;
+  | UseAddExpenseMutateFixedParams
+  | UseAddExpenseMutateRandomParams;
 
 export function useAddExpense() {
   const { mutate, mutateAsync, ...mutateResult } = useFlowMutate();
   const getMutation = async (
     params: UseAddExpenseMutateParams
   ): Promise<MutationVariables> => {
-    let debtAllocation;
-    if (params.type === "percentage") {
-      debtAllocation = arg(
-        {
-          fields: [
-            { name: "amount", value: params.amount.toFixed(8) },
-            {
-              name: "debtors",
-              value: params.debtors.map((x) => ({
-                key: x.address,
-                value: x.fraction.toFixed(8),
-              })),
-            },
-          ],
-        },
-        t.Struct(
-          `A.${sansPrefix(await getDivyAddress())}.Divy.FixedDebtAllocation`,
-          [
-            { value: t.UFix64 },
-            { value: t.Dictionary({ key: t.Address, value: t.UFix64 }) },
-          ] as any
-        )
-      );
+    if (params.type === "fixed") {
+      return {
+        cadence: ADD_FIXED_EXPENSE,
+        args: (arg, t) => [
+          arg(params.groupId, t.UInt64),
+          arg(params.amount.toFixed(8), t.UFix64),
+          arg(
+            params.debtors.map((x) => ({
+              key: x.address,
+              value: x.amount.toFixed(8),
+            })),
+            t.Dictionary({ key: t.Address, value: t.UFix64 })
+          ),
+          arg(params.description, t.String),
+          arg((params.timestamp.getTime() / 1000).toFixed(3), t.UFix64),
+        ],
+      };
+    } else if (params.type === "random") {
+      return {
+        cadence: ADD_RANDOM_EXPENSE,
+        args: (arg, t) => [
+          arg(params.groupId, t.UInt64),
+          arg(params.amount.toFixed(8), t.UFix64),
+          arg(params.debtors, t.Array(t.Address)),
+          arg(params.description, t.String),
+          arg((params.timestamp.getTime() / 1000).toFixed(3), t.UFix64),
+        ],
+      };
     } else {
-      debtAllocation = arg(
-        {
-          fields: [
-            { name: "amount", value: params.amount.toFixed(8) },
-            {
-              name: "debtors",
-              value: params.debtors.map((x) => ({
-                key: x.address,
-                value: x.amount.toFixed(8),
-              })),
-            },
-          ],
-        },
-        t.Struct(
-          `A.${sansPrefix(await getDivyAddress())}.Divy.FixedDebtAllocation`,
-          [
-            { value: t.UFix64 },
-            { value: t.Dictionary({ key: t.Address, value: t.UFix64 }) },
-          ] as any
-        )
-      );
+      throw new Error("Not implemented");
     }
-
-    return {
-      cadence: ADD_EXPENSE,
-      args: (arg, t) => [
-        arg(params.groupId, t.UInt64),
-        debtAllocation,
-        arg(params.description, t.String),
-        arg((params.timestamp.getTime() / 1000).toFixed(3), t.UFix64),
-      ],
-    };
   };
 
   return {

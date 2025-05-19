@@ -45,13 +45,14 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { useUserBalanceByGroupId } from "@/hooks/useUserBalanceByGroupId";
-import { useCurrentFlowUser } from "@onflow/kit";
+import { useCurrentFlowUser, useFlowTransaction } from "@onflow/kit";
 import { useUsdfBalance } from "@/hooks/useUsdfBalance";
 import { useMakePayment } from "@/hooks/useMakePayment";
 import { TotalExpensesCard } from "@/components/group/TotalExpensesCard";
 import { AlgorithmCard } from "@/components/group/AlgorithmCard";
 import { BalanceCard } from "@/components/group/BalanceCard";
 import { TransactionLink } from "@/components/TransactionLink";
+import { useRevealRandomPayer } from "@/hooks/useRevealRandomPayer";
 
 interface Member {
   address: string;
@@ -89,6 +90,7 @@ export default function GroupDetailPage() {
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
   const [currentTxId, setCurrentTxId] = useState<string>();
+  const { transactionStatus } = useFlowTransaction({ id: currentTxId || "" });
   const [isPaymentAmountDialogOpen, setIsPaymentAmountDialogOpen] =
     useState(false);
   const [isMembersListOpen, setIsMembersListOpen] = useState(false);
@@ -110,15 +112,12 @@ export default function GroupDetailPage() {
   });
   const { makePayment } = useMakePayment();
   const { addExpenseAsync } = useAddExpense();
+  const { revealRandomPayer } = useRevealRandomPayer();
 
   const refetchAllData = () => {
     refetchGroup();
     refetchBalance();
   };
-
-  // Dummy data for money owed/owing
-
-  const amountOwedToYou = 150.0;
 
   // Calculate total group expenses from dummyExpenses
   const totalGroupExpenses = group?.members
@@ -137,21 +136,18 @@ export default function GroupDetailPage() {
     memberAmounts: { member: string; amount: number }[]
   ) => {
     try {
-      const txId = await addExpenseAsync({
-        type: "fixed",
-        groupId: id,
-        amount,
-        description,
-        timestamp: new Date(),
-        debtors: memberAmounts.map(({ member, amount }) => ({
-          address: member,
-          amount,
-        })),
-      });
-
-      setCurrentTxId(txId);
-      setIsAddExpenseDialogOpen(false);
       if (splitType === "random") {
+        const txId = await addExpenseAsync({
+          type: "random",
+          groupId: id,
+          amount,
+          description,
+          timestamp: new Date(),
+          debtors: memberAmounts.map(({ member }) => member),
+        });
+
+        setCurrentTxId(txId);
+        setIsAddExpenseDialogOpen(false);
         setIsRandomPayerDialogOpen(true);
         setShowRevealButton(false);
         setRandomPayer(null);
@@ -159,7 +155,20 @@ export default function GroupDetailPage() {
           setShowRevealButton(true);
         }, 2500); // 2.5 seconds
       } else {
-        setIsTransactionDialogOpen(true);
+        const txId = await addExpenseAsync({
+          type: "fixed",
+          groupId: id,
+          amount,
+          description,
+          timestamp: new Date(),
+          debtors: memberAmounts.map(({ member, amount }) => ({
+            address: member,
+            amount,
+          })),
+        });
+
+        setCurrentTxId(txId);
+        setIsAddExpenseDialogOpen(true);
       }
     } catch (err) {
       console.error("Failed to add expense:", err);
@@ -181,8 +190,6 @@ export default function GroupDetailPage() {
     setPaymentAmount("");
     setIsTransactionDialogOpen(true);
   };
-
-  console.log(group);
 
   const expenseFeedItems =
     group?.members.flatMap((member) =>
@@ -442,11 +449,29 @@ export default function GroupDetailPage() {
             <Button
               onClick={() => {
                 if (!group) return;
+
+                const expenseAddedEvent = transactionStatus?.events.find((x) =>
+                  x.type.includes("ExpenseAdded")
+                );
+                if (!expenseAddedEvent) {
+                  console.error("ExpenseAdded event not found");
+                  return;
+                }
+
+                console.log({
+                  groupUuid: expenseAddedEvent.data.groupUuid,
+                  memberAddress: expenseAddedEvent.data.memberAddress,
+                  expenseUuid: expenseAddedEvent.data.expenseUuid,
+                });
+
                 // For now, just pick a random member and show it
-                const members = group.members;
-                const picked =
-                  members[Math.floor(Math.random() * members.length)];
-                setRandomPayer(picked.address);
+                revealRandomPayer({
+                  groupUuid: expenseAddedEvent.data.groupUuid,
+                  memberAddress: expenseAddedEvent.data.memberAddress,
+                  expenseUuid: expenseAddedEvent.data.expenseUuid,
+                });
+
+                //setRandomPayer(picked.address);
                 setShowRevealButton(false);
                 refetchAllData();
               }}

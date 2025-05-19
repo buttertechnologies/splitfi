@@ -5,7 +5,8 @@ import "Divy"
  */
 transaction(
     groupId: UInt64,
-    debtAllocation: {Divy.DebtAllocation},
+    amount: UFix64,
+    debtors: [Address],
     description: String,
     timestamp: UFix64,
 ) {
@@ -21,12 +22,17 @@ transaction(
     }
     
     execute {
+        let allocation <- Divy.createRandomDebtAllocation(
+            amount: amount,
+            debtors: debtors,
+        )
+        let expense <- Divy.createMemberExpense(
+            debtAllocation: <-allocation,
+            description: description,
+            timestamp: timestamp,
+        )
         self.membershipRef!.addExpense(
-            expense: Divy.MemberExpense(
-                debtAllocation: debtAllocation,
-                description: description,
-                timestamp: timestamp,
-            )
+            expense: <-expense,
         )
     }
 }
