@@ -2,6 +2,8 @@ import "EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed"
 import "FungibleTokenMetadataViews"
 
 transaction {
+    let vaultRef: &EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.Vault
+
     prepare(acct: auth(Storage, Capabilities) &Account) {
         // Setup USDF Vault
         let ftVaultData = EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.resolveContractView(resourceType: 
@@ -28,5 +30,15 @@ transaction {
                 at: ftVaultData.receiverPath,
             )
         }
+
+        // Borrow a reference to the USDF Vault
+        self.vaultRef = acct.storage.borrow<&EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.Vault>(
+            from: ftVaultData.storagePath
+        )!
+    }
+
+    execute {
+        // Mint tokens and send to USDF Vault
+        self.vaultRef.deposit(from: <- EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.mintTokens(amount: 10000.0))
     }
 }
