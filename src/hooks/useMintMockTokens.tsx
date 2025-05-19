@@ -1,5 +1,5 @@
 import { useFlowMutate } from "@onflow/kit";
-import CREATE_GROUP from "../../cadence/transactions/create-group.cdc";
+import CREATE_GROUP from "../../cadence/mocks/mint-mock-tokens.cdc";
 import { InferMutationVariables } from "@/types/query";
 
 type MutationVariables = InferMutationVariables<
