@@ -17,7 +17,6 @@ import { useUserGroups } from "@/hooks/useUserGroups";
 import { useCreateGroup } from "@/hooks/useCreateGroup";
 import { Users } from "lucide-react";
 import { TransactionDialog } from "@/components/TransactionDialog";
-import { GroupsIntro } from "@/components/GroupsIntro";
 
 export default function GroupsPage() {
   const [isOpen, setIsOpen] = useState(false);
@@ -82,9 +81,6 @@ export default function GroupsPage() {
           </DialogContent>
         </Dialog>
       </div>
-
-      <GroupsIntro />
-
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {groups?.length === 0 ? (
           <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
