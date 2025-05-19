@@ -1,17 +1,5 @@
 {
   "contracts": {
-    "SplitFi": {
-      "source": "cadence/contracts/SplitFi.cdc",
-      "aliases": {
-        "testing": "0000000000000007"
-      }
-    },
-    "SplitFiDto": {
-      "source": "cadence/contracts/SplitFiDto.cdc",
-      "aliases": {
-        "testing": "0000000000000008"
-      }
-    },
     "EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed": {
       "source": "cadence/mocks/EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.cdc",
       "aliases": {
@@ -30,6 +18,18 @@
       "source": "cadence/contracts/HeapUtils.cdc",
       "aliases": {
         "testing": "0000000000000009"
+      }
+    },
+    "SplitFi": {
+      "source": "cadence/contracts/SplitFi.cdc",
+      "aliases": {
+        "testing": "0000000000000007"
+      }
+    },
+    "SplitFiDto": {
+      "source": "cadence/contracts/SplitFiDto.cdc",
+      "aliases": {
+        "testing": "0000000000000008"
       }
     }
   },
@@ -331,6 +331,13 @@
         "type": "file",
         "location": "emulator-account.pkey"
       }
+    },
+    "testnet": {
+      "address": "cf775cea250ecb49",
+      "key": {
+        "type": "file",
+        "location": "testnet.pkey"
+      }
     }
   },
   "deployments": {
@@ -341,6 +348,13 @@
         "EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed",
         "RandomConsumer",
         "Xorshift128plus"
+      ]
+    },
+    "testnet": {
+      "testnet": [
+        "SplitFi",
+        "SplitFiDto",
+        "EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed"
       ]
     }
   }
