@@ -3,7 +3,7 @@ import { arg, sansPrefix, t } from "@onflow/fcl";
 import ADD_FIXED_EXPENSE from "../../cadence/transactions/add-fixed-expense.cdc";
 import ADD_RANDOM_EXPENSE from "../../cadence/transactions/add-random-expense.cdc";
 import { InferMutationVariables } from "@/types/query";
-import { getDivyAddress } from "@/lib/utils";
+import { getSplitFiAddress } from "@/lib/utils";
 
 type MutationVariables = InferMutationVariables<
   ReturnType<typeof useFlowMutate>

@@ -3,8 +3,9 @@ import "EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed"
 import "FungibleTokenMetadataViews"
 import "FungibleToken"
 import "RandomConsumer"
+
 access(all)
-contract Divy {
+contract SplitFi {
     access(all) let groups: {UInt64: Bool}
     access(all) let invitations: @{Address: {UInt64: Invitation}}
 
@@ -31,8 +32,8 @@ contract Divy {
     )
 
     init() {
-        self.MembershipCollectionPublicPath = /public/divyMembershipCollection
-        self.MembershipCollectionStoragePath = /storage/divyMembershipCollection
+        self.MembershipCollectionPublicPath = /public/splitFiMembershipCollection
+        self.MembershipCollectionStoragePath = /storage/splitFiMembershipCollection
 
         self.groups = {}
         self.invitations <- {}
@@ -89,7 +90,7 @@ contract Divy {
             return key.verify(
                 signature: signature,
                 signedData: self.getChallenge(address: address),
-                domainSeparationTag: "DivyClaimMembership",
+                domainSeparationTag: "SplitFiClaimMembership",
                 hashAlgorithm: HashAlgorithm(self.hashAlgorithm)!,
             )
         }
@@ -143,7 +144,7 @@ contract Divy {
     }
 
     /**
-     * The `Group` resource is used to represent a group of members for a Divy instance.
+     * The `Group` resource is used to represent a group of members for a SplitFi instance.
      */
     access(all) resource Group {
         access(all) let name: String
@@ -236,7 +237,7 @@ contract Divy {
         }
 
         access(Admin | Invitee) fun createMembership(): @Membership {
-            let adminCap = Divy.issueMemberCapability(groupId: self.uuid)
+            let adminCap = SplitFi.issueMemberCapability(groupId: self.uuid)
             return <- create Membership(
                 memberCapability: adminCap
             )
@@ -246,7 +247,7 @@ contract Divy {
             pre {
                 self.members[address] == nil: "Member already exists"
             }
-            Divy.inviteMember(groupId: self.uuid, address: address)
+            SplitFi.inviteMember(groupId: self.uuid, address: address)
             self.invitationsIndex[self.uuid] = address
         }
 
@@ -258,8 +259,8 @@ contract Divy {
             signatureAlgorithm: SignatureAlgorithm,
             hashAlgorithm: HashAlgorithm,
         ) {
-            let cap = Divy.account.capabilities.storage.issue<auth(Invitee) &Group>(
-                Divy.deriveGroupStoragePath(groupId: self.uuid)
+            let cap = SplitFi.account.capabilities.storage.issue<auth(Invitee) &Group>(
+                SplitFi.deriveGroupStoragePath(groupId: self.uuid)
             )
             let anonymousInvitation <- create AnonymousInvitation(
                 cap: cap,
@@ -277,7 +278,7 @@ contract Divy {
             // ---------- 1. Resolve the capability on the target account ----------
             let collectionCap = getAccount(address)
                 .capabilities
-                .get<&MembershipCollection>(Divy.MembershipCollectionPublicPath)
+                .get<&MembershipCollection>(SplitFi.MembershipCollectionPublicPath)
 
             // If the account does not expose a membership collection there is nothing to hydrate.
             if !collectionCap.check() {
@@ -436,7 +437,7 @@ contract Divy {
             for debtor in debtors {
                 self.debtors[debtor] = true
             }
-            self.request <- Divy.consumer.requestRandomness()
+            self.request <- SplitFi.consumer.requestRandomness()
             self.payer = nil
         }
 
@@ -460,7 +461,7 @@ contract Divy {
 
         access(all) fun revealPayer() {
             let req <- self.popRequest()
-            let value = Divy.consumer.fulfillRandomInRange(request: <-req, min: 0, max: UInt64(self.debtors.length - 1))
+            let value = SplitFi.consumer.fulfillRandomInRange(request: <-req, min: 0, max: UInt64(self.debtors.length - 1))
             let keys = self.debtors.keys
             self.payer = keys[value]
         }
@@ -577,7 +578,7 @@ contract Divy {
          * Add an expense to the group.
          */
         access(Owner) fun addExpense(expense: @MemberExpense) {
-            emit Divy.ExpenseAdded(
+            emit SplitFi.ExpenseAdded(
                 groupUuid: self.groupId,
                 memberAddress: self.owner!.address,
                 expenseUuid: expense.uuid,
@@ -693,7 +694,7 @@ contract Divy {
          */
         access(all) fun hydrate() {
             let owner = self.owner!.address
-            let memberCap: auth(Divy.Member) &Divy.Group = self.memberCapability.borrow()!
+            let memberCap: auth(SplitFi.Member) &SplitFi.Group = self.memberCapability.borrow()!
             memberCap.hydrateMember(address: owner, uuid: self.uuid)
         }
 
@@ -776,7 +777,7 @@ contract Divy {
                 self.groupIdToUuid[groupId] == nil: "User already has a membership for this group"
             }
 
-            let ownerInvitations = (&Divy.invitations[self.owner!.address] as auth(Mutate, Remove) &{UInt64: Invitation}?)!
+            let ownerInvitations = (&SplitFi.invitations[self.owner!.address] as auth(Mutate, Remove) &{UInt64: Invitation}?)!
             let invitation <- ownerInvitations.remove(key: groupId)!
             let membership <- invitation.cap.borrow()!.createMembership()
 
@@ -796,7 +797,7 @@ contract Divy {
                 self.groupIdToUuid[groupId] == nil: "User already has a membership for this group"
             }
 
-            let groupRef = Divy.borrowGroup(groupId: groupId)!
+            let groupRef = SplitFi.borrowGroup(groupId: groupId)!
             let cap = groupRef.claimAnonymousInvitation(
                 signature: signature,
                 publicKey: publicKey,
@@ -852,7 +853,7 @@ contract Divy {
      * Derive the storage path for a group.
      */
     access(all) fun deriveGroupStoragePath(groupId: UInt64): StoragePath {
-        return StoragePath(identifier: "/storage/divyGroup_/\(groupId)")!
+        return StoragePath(identifier: "/storage/splitFiGroup_/\(groupId)")!
     }
 
     /**

@@ -1,4 +1,4 @@
-import "Divy"
+import "SplitFi"
 
 /**
  * Claim an anomyous invitation to a group.
@@ -10,12 +10,12 @@ transaction(
     hashAlgorithm: UInt8,
     signature: String,
 ) {
-    let membershipCollectionRef: auth(Divy.Owner) &Divy.MembershipCollection
+    let membershipCollectionRef: auth(SplitFi.Owner) &SplitFi.MembershipCollection
 
     prepare(account: auth(Storage) &Account) {
         // Get an owner reference to the membership
-        self.membershipCollectionRef = account.storage.borrow<auth(Divy.Owner) &Divy.MembershipCollection>(
-            from: Divy.MembershipCollectionStoragePath
+        self.membershipCollectionRef = account.storage.borrow<auth(SplitFi.Owner) &SplitFi.MembershipCollection>(
+            from: SplitFi.MembershipCollectionStoragePath
         ) ?? panic("Membership collection not found")
     }
 

@@ -1,4 +1,4 @@
-import "Divy"
+import "SplitFi"
 import "LostAndFound"
 import "MetadataViews"
 import "FlowToken"
@@ -12,14 +12,14 @@ transaction (
     groupId: UInt64,
     recipient: Address,
 ) {
-    let groupAdminRef: auth(Divy.Admin) &Divy.Group
+    let groupAdminRef: auth(SplitFi.Admin) &SplitFi.Group
     let vaultRef: auth(FungibleToken.Withdraw) &FlowToken.Vault
     let receiverCap: Capability<&FlowToken.Vault>
 
     prepare(account: auth(Storage) &Account) {
         // Get an owner reference to the membership
-        let membershipRef = account.storage.borrow<auth(Divy.Owner) &Divy.Membership>(
-            from: Divy.MembershipCollectionStoragePath
+        let membershipRef = account.storage.borrow<auth(SplitFi.Owner) &SplitFi.Membership>(
+            from: SplitFi.MembershipCollectionStoragePath
         ) ?? panic("Group not found")
 
         // Borrow admin reference to the group
@@ -42,10 +42,10 @@ transaction (
         let foo = LostAndFound.deposit(
             redeemer: recipient,
             item: <-membership,
-            memo: "Invite to Divy group \(self.groupAdminRef.name)",
+            memo: "Invite to SplitFi group \(self.groupAdminRef.name)",
             display: MetadataViews.Display(
                 name: "Invite",
-                description: "Invite to Divy group \(self.groupAdminRef.name)",
+                description: "Invite to SplitFi group \(self.groupAdminRef.name)",
                 thumbnail: MetadataViews.URI(
                     baseURI: nil,
                     value: "https://placecats.com/300/300",
