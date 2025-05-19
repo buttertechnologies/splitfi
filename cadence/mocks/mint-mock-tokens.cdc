@@ -8,7 +8,7 @@ transaction {
             nil,
             viewType: Type<FungibleTokenMetadataViews.FTVaultData>()
         )! as! FungibleTokenMetadataViews.FTVaultData
-        let hasUsdfVault = acct.storage.check<&EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.Vault>(
+        let hasUsdfVault = acct.storage.check<@EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.Vault>(
             from: ftVaultData.storagePath
         )
         if (!hasUsdfVault) {
