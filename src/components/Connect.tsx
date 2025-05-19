@@ -26,7 +26,7 @@ export function Connect({
   onDisconnect?: () => void;
 }) {
   const { user, authenticate, unauthenticate } = useCurrentFlowUser();
-  const { data: usdfBalance, isSuccess: usdfBalanceIsSuccess } = useUsdfBalance(
+  const { data: usdfBalance, isSuccess: usdfBalanceIsSuccess, refetch: refetchBalance } = useUsdfBalance(
     { address: user.addr }
   );
   const [open, setOpen] = useState(false);
@@ -89,6 +89,11 @@ export function Connect({
     } catch (err) {
       console.error("Failed to mint tokens:", err);
     }
+  };
+
+  const handleTransactionSuccess = () => {
+    refetchBalance();
+    setOpen(true);
   };
 
   return (
@@ -194,7 +199,7 @@ export function Connect({
             pendingDescription="Your tokens are being minted. Please wait..."
             successTitle="Tokens Minted!"
             successDescription="Your tokens have been successfully minted."
-            onSuccess={() => setOpen(true)}
+            onSuccess={handleTransactionSuccess}
             closeOnSuccess={true}
           />
         </>
