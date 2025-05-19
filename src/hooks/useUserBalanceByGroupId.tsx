@@ -4,7 +4,7 @@ import GetMoneyOwed from "../../cadence/scripts/get-money-owed.cdc";
 
 type UseUserBalanceByGroupIdParams = {
   address?: string;
-  groupId: string;
+  groupId?: string;
 };
 
 export function useUserBalanceByGroupId({
@@ -19,6 +19,7 @@ export function useUserBalanceByGroupId({
     ],
     query: {
       enabled: !!address && !!groupId,
-    },
+      queryKey: ["getMoneyOwed", address, groupId],
+    } as any,
   }) as UseQueryResult<string, Error>;
 }
