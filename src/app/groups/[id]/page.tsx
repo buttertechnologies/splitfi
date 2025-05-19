@@ -143,7 +143,8 @@ export default function GroupDetailPage() {
         });
 
         setCurrentTxId(txId);
-        setIsAddExpenseDialogOpen(true);
+        setIsAddExpenseDialogOpen(false);
+        setIsTransactionDialogOpen(true);
       }
     } catch (err) {
       console.error("Failed to add expense:", err);
