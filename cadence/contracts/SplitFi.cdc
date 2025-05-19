@@ -109,10 +109,6 @@ contract SplitFi {
     }
 
     access(contract) fun inviteMember(groupId: UInt64, address: Address) {
-        pre {
-            self.invitations[address] == nil: "Address already invited"
-        }
-
         var _userInvites = (&self.invitations[address] as auth(Mutate, Insert) &{UInt64: Invitation}?)
         if _userInvites == nil {
             self.invitations[address] <-! {}
@@ -602,6 +598,16 @@ contract SplitFi {
                 expenseUuid: expense.uuid,
             )
             self.expenses[expense.uuid] <-! expense
+        }
+
+        /**
+         * Delete an expense from the group.
+         */
+        access(Owner) fun deleteExpense(uuid: UInt64) {
+            pre {
+                self.expenses[uuid] != nil: "Expense not found"
+            }
+            destroy <- self.expenses.remove(key: uuid)
         }
 
         /**

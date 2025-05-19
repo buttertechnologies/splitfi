@@ -4,26 +4,44 @@ import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { GroupSummary } from "@/types/models";
+import { useUserBalanceByGroupId } from "@/hooks/useUserBalanceByGroupId";
+import { useCurrentFlowUser } from "@onflow/kit";
 
 interface GroupCardProps {
   group: GroupSummary;
 }
 
 export function GroupCard({ group }: GroupCardProps) {
-  // Dummy amount for now
-  const dummyAmount = 1200.00;
-  const formattedAmount = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(dummyAmount);
-  
+  const totalGroupExpenses = group?.members
+    ?.flatMap((x) => x.expenses)
+    ?.reduce((sum, expense) => sum + Number(expense.amount), 0);
+  const formattedAmount = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(totalGroupExpenses || 0);
+
   // Dummy you owe amount for now
-  const dummyYouOwe = 150.00;
-  const formattedYouOwe = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(dummyYouOwe);
+  const { user } = useCurrentFlowUser();
+  const { data: userGroupBalance, refetch: refetchBalance } =
+    useUserBalanceByGroupId({
+      address: user.addr,
+      groupId: group.uuid,
+    });
+  const formattedYouOwe = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(Math.abs(Number(userGroupBalance) || 0));
 
   return (
     <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
       <CardHeader>
         <CardTitle>{group.name}</CardTitle>
         <div className="text-2xl font-bold mt-1">{formattedAmount}</div>
-        <div className="text-sm text-muted-foreground mb-2">You owe: {formattedYouOwe}</div>
+        <div className="text-sm text-muted-foreground mb-2">
+          {Number(userGroupBalance) > 0
+            ? `You're owed: ${formattedYouOwe}`
+            : `You owe: ${formattedYouOwe}`}
+        </div>
         <div className="flex -space-x-2 mt-2">
           {group.members.map((member) => (
             <Avatar key={member.address} className="border-2 border-background">
@@ -43,4 +61,4 @@ export function GroupCard({ group }: GroupCardProps) {
       </CardFooter>
     </Card>
   );
-} 
+}
