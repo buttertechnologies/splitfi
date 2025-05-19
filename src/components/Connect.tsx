@@ -11,8 +11,9 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, Copy, LogOut, Check } from "lucide-react";
+import { User, Copy, LogOut, Check, Coins } from "lucide-react";
 import { useUsdfBalance } from "@/hooks/useUsdfBalance";
+import { useMintMockTokens } from "@/hooks/useMintMockTokens";
 
 export function Connect({
   onConnect,
@@ -25,6 +26,7 @@ export function Connect({
   const { data: balance } = useUsdfBalance({ address: user.addr });
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { mintMockTokens } = useMintMockTokens();
 
   const displayAddress =
     user.loggedIn && user.addr
@@ -124,6 +126,18 @@ export function Connect({
                 <LogOut className="mr-2 h-4 w-4" />
                 Disconnect
               </Button>
+            </div>
+            <div className="flex gap-2 w-full">
+              {process.env.NEXT_PUBLIC_FLOW_NETWORK !== "mainnet" && (
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={mintMockTokens}
+                >
+                  <Coins className="mr-2 h-4 w-4" />
+                  Mint Mock Tokens
+                </Button>
+              )}
             </div>
             <DialogClose asChild>
               <button className="absolute top-4 right-4" aria-label="Close" />

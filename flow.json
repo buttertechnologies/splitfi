@@ -4,8 +4,7 @@
       "source": "cadence/mocks/EVMVMBridgedToken_2aabea2058b5ac2d339b163c6ab6f2b6d53aabed.cdc",
       "aliases": {
         "mainnet": "1e4aa0b87d10b141",
-        "testing": "000000000000000a",
-        "testnet": "dfc20aee650fcbdf"
+        "testing": "000000000000000a"
       }
     },
     "FCL": {
