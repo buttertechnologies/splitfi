@@ -13,7 +13,7 @@ import { useMintMockTokens } from "@/hooks/useMintMockTokens";
 interface MintDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onMintComplete: () => void;
+  onMintComplete: (txId: string) => void;
   address: string;
 }
 
@@ -23,11 +23,15 @@ export function MintDialog({
   onMintComplete,
   address,
 }: MintDialogProps) {
-  const { mintMockTokens } = useMintMockTokens();
+  const { mintMockTokensAsync } = useMintMockTokens();
 
   const handleMint = async () => {
-    mintMockTokens({ address });
-    onMintComplete();
+    try {
+      const txId = await mintMockTokensAsync({ address });
+      onMintComplete(txId);
+    } catch (err) {
+      console.error("Failed to mint tokens:", err);
+    }
   };
 
   return (
