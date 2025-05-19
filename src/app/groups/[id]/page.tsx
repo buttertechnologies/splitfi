@@ -194,7 +194,6 @@ export default function GroupDetailPage() {
         const date = new Date(Number(payment.timestamp) * 1000);
         const entries = Object.entries(payment.recipients);
 
-        console.log(entries);
         return {
           date,
           content: (
@@ -322,9 +321,10 @@ export default function GroupDetailPage() {
             </div>
             <h3 className="text-xl font-semibold mb-2">No Activity Yet</h3>
             <p className="text-muted-foreground max-w-md">
-              There hasn't been any activity in this group yet. Add an expense to get started!
+              There hasn't been any activity in this group yet. Add an expense
+              to get started!
             </p>
-            <Button 
+            <Button
               onClick={() => setIsAddExpenseDialogOpen(true)}
               className="mt-4"
             >
@@ -452,13 +452,6 @@ export default function GroupDetailPage() {
                   return;
                 }
 
-                console.log({
-                  groupUuid: expenseAddedEvent.data.groupUuid,
-                  memberAddress: expenseAddedEvent.data.memberAddress,
-                  expenseUuid: expenseAddedEvent.data.expenseUuid,
-                });
-
-                // For now, just pick a random member and show it
                 revealRandomPayer({
                   groupUuid: expenseAddedEvent.data.groupUuid,
                   memberAddress: expenseAddedEvent.data.memberAddress,
