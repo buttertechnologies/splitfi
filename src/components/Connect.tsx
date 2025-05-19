@@ -16,6 +16,7 @@ import { User, Copy, LogOut, Check, Coins } from "lucide-react";
 import { useUsdfBalance } from "@/hooks/useUsdfBalance";
 import { useMintMockTokens } from "@/hooks/useMintMockTokens";
 import { MintDialog } from "./MintDialog";
+import { TransactionDialog } from "./TransactionDialog";
 
 export function Connect({
   onConnect,
@@ -31,7 +32,9 @@ export function Connect({
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showMintDialog, setShowMintDialog] = useState(false);
-  const { mintMockTokens } = useMintMockTokens();
+  const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
+  const [txId, setTxId] = useState<string>();
+  const { mintMockTokensAsync } = useMintMockTokens();
 
   useEffect(() => {
     if (
@@ -72,9 +75,20 @@ export function Connect({
     if (onDisconnect) onDisconnect();
   };
 
-  const handleMintComplete = () => {
+  const handleMintComplete = (txId: string) => {
     setShowMintDialog(false);
-    setOpen(true);
+    setTxId(txId);
+    setIsTransactionDialogOpen(true);
+  };
+
+  const handleMint = async () => {
+    try {
+      const txId = await mintMockTokensAsync({ address: user.addr });
+      setTxId(txId);
+      setIsTransactionDialogOpen(true);
+    } catch (err) {
+      console.error("Failed to mint tokens:", err);
+    }
   };
 
   return (
@@ -154,7 +168,7 @@ export function Connect({
                   <Button
                     variant="outline"
                     className="flex-1"
-                    onClick={() => mintMockTokens({ address: user.addr })}
+                    onClick={handleMint}
                   >
                     <Coins className="mr-2 h-4 w-4" />
                     Mint Mock Tokens
@@ -171,6 +185,17 @@ export function Connect({
             onOpenChange={setShowMintDialog}
             onMintComplete={handleMintComplete}
             address={user.addr || ""}
+          />
+          <TransactionDialog
+            open={isTransactionDialogOpen}
+            onOpenChange={setIsTransactionDialogOpen}
+            txId={txId}
+            pendingTitle="Minting Tokens"
+            pendingDescription="Your tokens are being minted. Please wait..."
+            successTitle="Tokens Minted!"
+            successDescription="Your tokens have been successfully minted."
+            onSuccess={() => setOpen(true)}
+            closeOnSuccess={true}
           />
         </>
       )}
