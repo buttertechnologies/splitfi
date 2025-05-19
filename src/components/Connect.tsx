@@ -25,7 +25,9 @@ export function Connect({
   onDisconnect?: () => void;
 }) {
   const { user, authenticate, unauthenticate } = useCurrentFlowUser();
-  const { data: balance } = useUsdfBalance({ address: user.addr });
+  const { data: usdfBalance, isSuccess: usdfBalanceIsSuccess } = useUsdfBalance(
+    { address: user.addr }
+  );
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showMintDialog, setShowMintDialog] = useState(false);
@@ -35,11 +37,12 @@ export function Connect({
     if (
       user.loggedIn &&
       process.env.NEXT_PUBLIC_FLOW_NETWORK !== "mainnet" &&
-      (!balance || Number(balance) === 0)
+      (!usdfBalance || Number(usdfBalance) === 0) &&
+      usdfBalanceIsSuccess
     ) {
       setShowMintDialog(true);
     }
-  }, [user.loggedIn, balance]);
+  }, [user.loggedIn, usdfBalance]);
 
   const displayAddress =
     user.loggedIn && user.addr
@@ -87,7 +90,7 @@ export function Connect({
               {Intl.NumberFormat("en-US", {
                 style: "currency",
                 currency: "USD",
-              }).format(balance ? Number(balance) : 0)}
+              }).format(usdfBalance ? Number(usdfBalance) : 0)}
             </span>
             <span className="w-px h-6 bg-gray-200 mx-1 hidden sm:inline-flex" />
             <span className="flex items-center gap-1 text-sm sm:text-base">
@@ -115,7 +118,7 @@ export function Connect({
                   {Intl.NumberFormat("en-US", {
                     style: "currency",
                     currency: "USD",
-                  }).format(balance ? Number(balance) : 0)}
+                  }).format(usdfBalance ? Number(usdfBalance) : 0)}
                 </div>
               </DialogHeader>
               <div className="flex gap-2 w-full">
