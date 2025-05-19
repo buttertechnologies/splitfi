@@ -463,7 +463,9 @@ export default function GroupDetailPage() {
               expense.
             </DialogDescription>
           </DialogHeader>
-          {currentTxId && <TransactionLink txId={currentTxId} />}
+          {currentTxId && !randomPayer && (
+            <TransactionLink txId={currentTxId} />
+          )}
           <div className="flex flex-col items-center justify-center py-6">
             {randomPayer ? null : (
               <>
@@ -513,14 +515,17 @@ export default function GroupDetailPage() {
           {typeof revealTxStatus?.status === "number" &&
             revealTxStatus.status >= 3 &&
             randomPayer && (
-              <div className="mt-6 text-center w-full flex flex-col items-center">
+              <div className="text-center w-full flex flex-col items-center">
                 <PartyPopper className="h-10 w-10 text-primary mb-2 animate-pop" />
                 <p className="text-lg font-semibold mb-2">Selected payer:</p>
                 <p className="text-xl font-mono text-primary mb-6">
                   {randomPayer.slice(0, 6)}...{randomPayer.slice(-4)}
                 </p>
                 {revealTxId && <TransactionLink txId={revealTxId} />}
-                <Button onClick={() => setIsRandomPayerDialogOpen(false)}>
+                <Button
+                  className="mt-2"
+                  onClick={() => setIsRandomPayerDialogOpen(false)}
+                >
                   Done
                 </Button>
               </div>
