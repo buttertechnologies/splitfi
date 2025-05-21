@@ -15,6 +15,7 @@ export function useInvitations({ address }: UseInvitationsParams) {
     ],
     query: {
       enabled: !!address,
+      refetchInterval: 3000,
     },
   }) as UseQueryResult<InvitationList, Error>;
 }
