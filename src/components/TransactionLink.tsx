@@ -8,8 +8,8 @@ interface TransactionLinkProps {
 
 const BLOCK_EXPLORER_URL = {
   mainnet: "https://www.flowscan.io",
-  testnet: "https://testnet.flowscan.org",
-  emulator: "https://testnet.flowscan.org",
+  testnet: "https://testnet.flowscan.io",
+  emulator: "https://testnet.flowscan.io",
 };
 
 export function TransactionLink({ txId }: TransactionLinkProps) {
