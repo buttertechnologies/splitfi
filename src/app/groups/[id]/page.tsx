@@ -65,22 +65,15 @@ export default function GroupDetailPage() {
   const { user } = useCurrentFlowUser();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
-  const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
-  const [currentTxId, setCurrentTxId] = useState<string>();
-  const { transactionStatus } = useFlowTransaction({ id: currentTxId || "" });
   const [isPaymentAmountDialogOpen, setIsPaymentAmountDialogOpen] =
     useState(false);
   const [isMembersListOpen, setIsMembersListOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
-  const [isRandomPayerDialogOpen, setIsRandomPayerDialogOpen] = useState(false);
   const [showRevealButton, setShowRevealButton] = useState(false);
   const [randomPayer, setRandomPayer] = useState<string | null>(null);
   const [showOnlyUserExpenses, setShowOnlyUserExpenses] = useState(false);
   const [isRandomExpenseTx, setIsRandomExpenseTx] = useState(false);
   const [revealTxId, setRevealTxId] = useState<string | null>(null);
-  const { transactionStatus: revealTxStatus } = useFlowTransaction({
-    id: revealTxId || "",
-  });
   const [isDiceBouncing, setIsDiceBouncing] = useState(false);
 
   const { data: group, refetch: refetchGroup } = useGroup({ id });
@@ -93,9 +86,25 @@ export default function GroupDetailPage() {
   const { data: usdfBalance } = useUsdfBalance({
     address: user.addr,
   });
-  const { makePayment } = useMakePayment();
-  const { addExpenseAsync } = useAddExpense();
-  const { revealRandomPayerAsync } = useRevealRandomPayer();
+  const {
+    makePayment,
+    data: paymentTxId,
+    reset: resetMakePayment,
+  } = useMakePayment();
+  const {
+    addExpenseAsync,
+    data: addExpenseTxId,
+    reset: resetAddExpense,
+  } = useAddExpense();
+  const { revealRandomPayerAsync, reset: resetRevealRandomPayer } =
+    useRevealRandomPayer();
+
+  const { transactionStatus: revealTxStatus } = useFlowTransaction({
+    id: revealTxId || "",
+  });
+  const { transactionStatus: addExpenseTxStatus } = useFlowTransaction({
+    id: addExpenseTxId || "",
+  });
 
   const refetchAllData = () => {
     refetchGroup();
@@ -118,7 +127,7 @@ export default function GroupDetailPage() {
   ) => {
     try {
       if (splitType === "random") {
-        const txId = await addExpenseAsync({
+        await addExpenseAsync({
           type: "random",
           groupId: id,
           amount,
@@ -127,14 +136,12 @@ export default function GroupDetailPage() {
           debtors: memberAmounts.map(({ member }) => member),
         });
 
-        setCurrentTxId(txId);
         setIsAddExpenseDialogOpen(false);
-        setIsRandomPayerDialogOpen(true);
         setShowRevealButton(false);
         setRandomPayer(null);
         setIsRandomExpenseTx(true);
       } else {
-        const txId = await addExpenseAsync({
+        await addExpenseAsync({
           type: "fixed",
           groupId: id,
           amount,
@@ -146,9 +153,7 @@ export default function GroupDetailPage() {
           })),
         });
 
-        setCurrentTxId(txId);
         setIsAddExpenseDialogOpen(false);
-        setIsTransactionDialogOpen(true);
       }
     } catch (err) {
       console.error("Failed to add expense:", err);
@@ -168,7 +173,6 @@ export default function GroupDetailPage() {
 
     setIsPaymentAmountDialogOpen(false);
     setPaymentAmount("");
-    setIsTransactionDialogOpen(true);
   };
 
   const expenseFeedItems =
@@ -218,13 +222,12 @@ export default function GroupDetailPage() {
   useEffect(() => {
     if (
       isRandomExpenseTx &&
-      currentTxId &&
-      typeof transactionStatus?.status === "number" &&
-      transactionStatus.status >= 3
+      typeof addExpenseTxStatus?.status === "number" &&
+      addExpenseTxStatus.status >= 3
     ) {
       setShowRevealButton(true);
     }
-  }, [isRandomExpenseTx, currentTxId, transactionStatus?.status]);
+  }, [isRandomExpenseTx, addExpenseTxStatus?.status]);
 
   useEffect(() => {
     if (
@@ -444,10 +447,10 @@ export default function GroupDetailPage() {
       </Dialog>
 
       <Dialog
-        open={isRandomPayerDialogOpen}
+        open={(!!addExpenseTxId && isRandomExpenseTx) || !!revealTxId}
         onOpenChange={(open) => {
-          setIsRandomPayerDialogOpen(open);
           if (!open) {
+            resetAddExpense();
             setIsRandomExpenseTx(false);
             setRevealTxId(null);
             setRandomPayer(null);
@@ -463,9 +466,7 @@ export default function GroupDetailPage() {
               expense.
             </DialogDescription>
           </DialogHeader>
-          {currentTxId && !randomPayer && (
-            <TransactionLink txId={currentTxId} />
-          )}
+          {revealTxId && !randomPayer && <TransactionLink txId={revealTxId} />}
           <div className="flex flex-col items-center justify-center py-6">
             {randomPayer ? null : (
               <>
@@ -485,7 +486,7 @@ export default function GroupDetailPage() {
               onClick={async () => {
                 if (!group) return;
 
-                const expenseAddedEvent = transactionStatus?.events.find((x) =>
+                const expenseAddedEvent = addExpenseTxStatus?.events.find((x) =>
                   x.type.includes("ExpenseAdded")
                 );
                 if (!expenseAddedEvent) {
@@ -524,7 +525,14 @@ export default function GroupDetailPage() {
                 {revealTxId && <TransactionLink txId={revealTxId} />}
                 <Button
                   className="mt-2"
-                  onClick={() => setIsRandomPayerDialogOpen(false)}
+                  onClick={() => {
+                    resetAddExpense();
+                    resetRevealRandomPayer();
+                    setIsRandomExpenseTx(false);
+                    setRevealTxId(null);
+                    setRandomPayer(null);
+                    setShowRevealButton(false);
+                  }}
                 >
                   Done
                 </Button>
@@ -533,14 +541,35 @@ export default function GroupDetailPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Expense Added Transaction Dialog */}
       <TransactionDialog
-        open={isTransactionDialogOpen}
-        onOpenChange={setIsTransactionDialogOpen}
-        txId={currentTxId}
+        open={!!addExpenseTxId && !isRandomExpenseTx}
+        onOpenChange={(open) => {
+          if (!open) {
+            resetAddExpense();
+          }
+        }}
+        txId={addExpenseTxId}
         pendingTitle="Adding Expense"
         pendingDescription="Your expense is being added to the group. Please wait..."
         successTitle="Expense Added!"
         successDescription="Your expense has been successfully added to the group."
+        onSuccess={refetchAllData}
+      />
+
+      {/* Payment Transaction Dialog */}
+      <TransactionDialog
+        open={!!paymentTxId}
+        onOpenChange={(open) => {
+          if (!open) {
+            resetMakePayment();
+          }
+        }}
+        txId={paymentTxId}
+        pendingTitle="Making Payment"
+        pendingDescription="Your payment is being processed. Please wait..."
+        successTitle="Payment Successful!"
+        successDescription="Your payment has been successfully processed."
         onSuccess={refetchAllData}
       />
 
