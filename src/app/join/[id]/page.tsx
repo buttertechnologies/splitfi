@@ -3,7 +3,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import { useAcceptInvitation } from "@/hooks/useAcceptInvitation";
 import { useGroup } from "@/hooks/useGroup";
@@ -21,16 +21,24 @@ export default function JoinGroupPage() {
   const [txId, setTxId] = useState<string>();
 
   const { data: invitation } = useInvitations({ address: user?.addr });
-  const groupUuid = invitation?.invitations?.find(
-    (i) => i.uuid === invitationUuid
-  )?.group?.uuid;
+  const [groupUuid, setGroupUuid] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    // TODO: This is a hack
+    const _groupUuid = invitation?.invitations?.find(
+      (i) => i.uuid === invitationUuid
+    )?.group?.uuid;
+
+    if (_groupUuid) {
+      setGroupUuid(_groupUuid);
+    }
+  }, [invitation, invitationUuid]);
   const { data: group } = useGroup({
     id: groupUuid,
   });
 
   const handleJoin = async () => {
     if (!groupUuid) return;
-    
+
     try {
       const txId = await acceptInvitationAsync({
         groupId: groupUuid,
