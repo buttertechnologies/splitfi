@@ -20,6 +20,7 @@ export function useUserBalanceByGroupId({
     query: {
       enabled: !!address && !!groupId,
       queryKey: ["getMoneyOwed", address, groupId],
+      refetchInterval: 3000,
     } as any,
   }) as UseQueryResult<string, Error>;
 }
