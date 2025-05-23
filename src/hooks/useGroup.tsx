@@ -13,6 +13,7 @@ export function useGroup({ id }: UseGroupParams) {
     args: (arg, t) => [id ? arg(id, t.UInt64) : arg(false, t.Bool)],
     query: {
       enabled: !!id,
+      refetchInterval: 3000,
     },
   }) as UseQueryResult<GroupSummary, Error>;
 }
