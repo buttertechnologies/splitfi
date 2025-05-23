@@ -62,12 +62,6 @@ export default function JoinGroupPage() {
     }
   };
 
-  console.log({
-    txOpen,
-    groupUuid,
-    canGoToGroup,
-  });
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background">
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 max-w-md w-full flex flex-col items-center gap-6">
